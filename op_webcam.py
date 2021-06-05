@@ -1,69 +1,29 @@
 from datetime import datetime
 import cv2 as cv
-import numpy as np
 import os
 import sys
+import argparse
+import json
+from skeleton import Skeleton
 import argparse
 
 # use if necessary
 # sys.path.append('/usr/local/python')
 
-class Skeleton:
-    def __init__(self, body_keypoints):
-        bk = body_keypoints.reshape(25, 3)
-        self.body_kp = {
-            'Nose': bk[0],
-            'Neck': bk[1],
-            'RShoulder': bk[2],
-            'RElbow': bk[3],
-            'RWrist': bk[4],
-            'LShoulder': bk[5],
-            'LElbow': bk[6],
-            'LWrist': bk[7],
-            'Midhip': bk[8],
-            'RHip': bk[9],
-            'RKnee': bk[10],
-            'RAnkle': bk[11],
-            'LHip': bk[12],
-            'LKnee': bk[13],
-            'LAnkle': bk[14],
-            'REye': bk[15],
-            'LEye': bk[16],
-            'REar': bk[17],
-            'LEar': bk[18],
-            'LBigToe': bk[19],
-            'LSmallToe': bk[20],
-            'LHeel': bk[21],
-            'RBigToe': bk[22],
-            'RSmallToe': bk[23],
-            'RHeel': bk[24]
-        }
-        self.calculate_joint_angles()
+ROOT_PATH = './'
+recordings_dir = os.path.join(ROOT_PATH, 'recordings')
 
-        print('Joint Angles :: ')
-        print(self.joint_angles)
+def save_as_json(skeletons, folder_name=None):
+    action_dir = os.path.join(recordings_dir, folder_name)
+    file_name = "recording_{:%Y%m%dT%H%M%S}.json".format(datetime.now())
+    joint_angles = []
+    for s in skeletons:
+        joint_angles.append(s.joint_angles)
 
+    data = {'patient_name': '', 'joint_angles': joint_angles}
 
-    def calc_joint_angle(self, a, b, c):
-        ba = a - b
-        bc = c - b
-
-        cosine = np.dot(ba, bc) / ( np.linalg.norm(ba) * np.linalg.norm(bc) )
-
-        return np.arccos(cosine)
-
-
-    def calculate_joint_angles(self):
-        self.joint_angles = {
-            'LArmpitJoint': self.calc_joint_angle(self.body_kp['Neck'], self.body_kp['LShoulder'], self.body_kp['LElbow']),
-            'RArmpitJoint': self.calc_joint_angle(self.body_kp['Neck'], self.body_kp['RShoulder'], self.body_kp['RElbow']),
-            'LElbowJoint': self.calc_joint_angle(self.body_kp['LShoulder'], self.body_kp['LElbow'], self.body_kp['LWrist']),
-            'RElbowJoint': self.calc_joint_angle(self.body_kp['RShoulder'], self.body_kp['RElbow'], self.body_kp['RWrist']),
-            'LHipJoint': self.calc_joint_angle(self.body_kp['Midhip'], self.body_kp['LHip'], self.body_kp['LKnee']),
-            'RHipJoint': self.calc_joint_angle(self.body_kp['Midhip'], self.body_kp['RHip'], self.body_kp['RKnee']),
-            'LKneeJoint': self.calc_joint_angle(self.body_kp['LHip'], self.body_kp['LHip'], self.body_kp['LAnkle']),
-            'RKneeJoint': self.calc_joint_angle(self.body_kp['RHip'], self.body_kp['RHip'], self.body_kp['RAnkle'])
-        }
+    with open(os.path.join(action_dir, file_name), 'w', encoding='utf-8') as write_file:
+        json.dump(data, write_file, ensure_ascii=False, indent=4)
 
 
 try:
@@ -87,6 +47,14 @@ if __name__ == '__main__':
     params = set_params()
     skeletons = []
 
+    parser = argparse.ArgumentParser(description='Record an action or compare with an existing one')
+
+    parser.add_argument('command', help="'record' or 'compare'")
+
+    parser.add_argument('--folder', default='action1', help='Name of an action folder inside of recordings directory.')
+
+    args = parser.parse_args()
+
     try:
         # Starting OpenPose
         opWrapper = op.WrapperPython()
@@ -105,6 +73,9 @@ if __name__ == '__main__':
             opWrapper.emplaceAndPop(op.VectorDatum([datum]))
 
             body_keypoints = datum.poseKeypoints
+            if (body_keypoints.shape[0]) > 1:
+                print('This program does not support more than 1 person in the frame!')
+                break
             skeletons.append(Skeleton(body_keypoints))
 
             # Display Image
@@ -114,10 +85,13 @@ if __name__ == '__main__':
             cv.imshow("Openpose result", output_image)
 
             key = cv.waitKey(1)
-
             if key == ord('q'):
                 print("Time taken:", str(datetime.now() - startTime))
                 print('Skeletons collected :: ', len(skeletons))
+
+                if args.command == 'record':
+                    save_as_json(skeletons, args.folder)
+
                 break
 
     except Exception as e:
