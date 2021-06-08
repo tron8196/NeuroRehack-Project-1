@@ -3,47 +3,11 @@ import cv2 as cv
 import os
 import sys
 import argparse
-import json
-from skeleton import Skeleton
 import argparse
+from skeleton_sequence import SkeletonSequence
 
 # use if necessary
 # sys.path.append('/usr/local/python')
-
-ROOT_PATH = './'
-recordings_dir = os.path.join(ROOT_PATH, 'recordings')
-
-class SkeletonSequence():
-    def __init__(self):
-        # patient data, including joint angle sequence
-        self.sequence_data = []
-
-        # joint angle sequences
-        self.skeletons = []
-
-    def add(self, body_keypoints):
-        self.skeletons.append(Skeleton(body_keypoints))
-
-    def load_from_json(self, folder_name=None):
-        sf = open(folder_name)
-        self.sequence_data = json.load(sf)
-
-        for joint_angles in self.sequence_data['joint_angles']:
-            self.skeletons.append(Skeleton(joint_angles, load_from_json=True))
-
-    def save_as_json(self, folder_name=None):
-        action_dir = os.path.join(recordings_dir, folder_name)
-        file_name = "recording_{:%Y%m%dT%H%M%S}.json".format(datetime.now())
-        joint_angles = []
-        for s in self.skeletons:
-            joint_angles.append(s.joint_angles)
-
-        if not self.sequence_data:
-            self.sequence_data = {'patient_name': '', 'joint_angles': joint_angles}
-
-        with open(os.path.join(action_dir, file_name), 'w', encoding='utf-8') as write_file:
-            json.dump(self.sequence_data, write_file, ensure_ascii=False, indent=4)
-
 
 try:
     import pyopenpose as op
@@ -103,7 +67,7 @@ if __name__ == '__main__':
                 print('This program does not support more than 1 person in the frame!')
                 break
 
-            skeleton_seq.add(body_keypoints)
+            skeleton_seq.add_keypoints(body_keypoints)
 
             # Display Image
             output_image = datum.cvOutputData
