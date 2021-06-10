@@ -24,7 +24,7 @@ if args.filt_size is None:
 else:
     filt_size = int(args.filt_size)
 
-if args.sigma == '':
+if args.sigma is None:
     sigma = 1
 else:
     sigma = float(args.sigma)
