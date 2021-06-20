@@ -1,2 +1,4 @@
-/recordings
-__pycache__
+
+**/__pycache__
+./json_recordings/*
+./video_recordings/*

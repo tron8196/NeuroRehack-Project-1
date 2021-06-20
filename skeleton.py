@@ -35,9 +35,6 @@ class Skeleton:
             }
             self.calculate_joint_angles()
 
-            print('Joint Angles :: ')
-            print(self.joint_angles)
-
 
     def calc_joint_angle(self, a, b, c):
         ba = a - b

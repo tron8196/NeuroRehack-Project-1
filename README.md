@@ -11,7 +11,7 @@ python op_webcam.py record --folder=action2
 ```
 
 The expected folder structure is:
-- recordings
+- json_recordings
   - action1
     - recording_timestamp.json
     ...
@@ -21,7 +21,7 @@ The expected folder structure is:
 In compare mode, you'll need to provide a previous recording's json file path to the --data argument.
 
   ```
-  python op_webcam.py compare --data=./recordings/action1/recording_timestamp.json
+  python op_webcam.py compare --data=./json_recordings/action1/recording_timestamp.json
   ```
 
 ## Relevant Links

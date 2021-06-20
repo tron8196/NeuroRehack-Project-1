@@ -38,16 +38,21 @@ else:
     sigma = float(args.sigma)
 
 
-sns.set()
-
-for key, values in skeleton_seq.sequence_data['joint_angles'].items():
+def smoothing(values):
     # removing NaNs
     values = [v for v in values if v==v]
 
     values = medfilt(volume=values, kernel_size=filt_size)
     values = gaussian_filter(input=values, sigma=sigma)
 
-    skeleton_seq.sequence_data['joint_angles'][key] = values
+    return values
+
+
+sns.set()
+
+for key, values in skeleton_seq.sequence_data['joint_angles'].items():
+
+    # skeleton_seq.sequence_data['joint_angles'][key] = smoothing(values)
 
     plt.plot(range(len(values)), values)
 

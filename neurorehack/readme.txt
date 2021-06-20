@@ -1,1 +1,0 @@
-Start with paper 1 onwards. This is the paper on which our main idea will be based on.

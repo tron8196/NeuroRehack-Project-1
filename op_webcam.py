@@ -38,6 +38,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--data', help='Path to the json recording of an action.')
 
+    parser.add_argument('--video', help='video file of an exercise being performed.')
+
     args = parser.parse_args()
 
     if args.command == 'compare':
@@ -70,20 +72,22 @@ if __name__ == '__main__':
 
             # Display Image
             output_image = datum.cvOutputData
-            cv.putText(output_image, "Press 'q' to quit", (20, 30),
+            cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
                                 font, 1, (0, 0, 0), 1, cv.LINE_AA)
-            cv.imshow("Openpose result", output_image)
+            cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
+            cv.resizeWindow('image', 1366, 784)
+            cv.imshow('Openpose result', cv.flip(output_image, 1))
+            # cv.imshow('Openpose result', output_image)
 
             key = cv.waitKey(1)
             if key == ord('q'):
                 print("Time taken:", str(datetime.now() - startTime))
                 print('Skeletons collected :: ', len(skeleton_seq.skeletons))
-
+                break
+            elif key == ord('s'):
                 if args.command == 'record':
                     assert args.folder, "Argument --folder is required to save this recording as a json file."
-
                     skeleton_seq.save_as_json(args.folder)
-
                 break
 
     except Exception as e:
