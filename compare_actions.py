@@ -6,6 +6,7 @@ import argparse
 from skeleton_sequence import SkeletonSequence
 import pyttsx3
 import threading
+import numpy as np
 
 try:
     import pyopenpose as op
@@ -15,6 +16,7 @@ except ImportError as e:
 
 ROOT_PATH = './'
 json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings')
+video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings')
 
 class Compare:
     def __init__(self, args):
@@ -28,17 +30,21 @@ class Compare:
         self.skeleton_seq = SkeletonSequence()
         self.skeleton_seq_comp = SkeletonSequence()
 
-        exercise_dir = os.path.join(json_recordings_dir, args.folder)
-        file_name = next(os.walk(exercise_dir))[2][0]
-        self.skeleton_seq_comp.load_from_json(os.path.join(exercise_dir, file_name))
+        exercise_json_dir = os.path.join(json_recordings_dir, args.folder)
+        file_name = next(os.walk(exercise_json_dir))[2][0]
+        self.skeleton_seq_comp.load_from_json(os.path.join(exercise_json_dir, file_name))
 
         self.user_in_position = False
+
+        exercise_vid_dir = os.path.join(video_recordings_dir, args.folder)
+        self.template_video = os.path.join(exercise_vid_dir, next(os.walk(exercise_vid_dir))[2][0])
+        print(self.template_video)
 
 
     def countdown_text(self):
         self.engine.say('Please get to a position so that the camera can see your whole body.')
         # self.engine.say('10'), self.engine.say('9'), self.engine.say('8')
-        for i in range(7, -1, -1):
+        for i in range(3, -1, -1):
             self.engine.say(i)
 
         self.engine.runAndWait()
@@ -54,54 +60,61 @@ class Compare:
             opWrapper.start()
 
             stream = cv.VideoCapture(0)
-            font = cv.FONT_HERSHEY_SIMPLEX
+            template_stream = cv.VideoCapture(self.template_video)
 
-            datum = op.Datum()
+            video_codex = cv.VideoWriter_fourcc('F','M','P','4')
+            writer = cv.VideoWriter('./output.mp4', video_codex, 30.0, (640, 480))
+
+            font = cv.FONT_HERSHEY_SIMPLEX
 
             startTime = datetime.now()
             while True:
+                datum = op.Datum()
                 has_frame, image = stream.read()
                 if not has_frame:
                     break
 
                 if self.user_in_position:
-                    datum.cvInputData = cv.resize(image, (128, 128))
-                    opWrapper.emplaceAndPop(op.VectorDatum([datum]))
-
-                    body_keypoints = datum.poseKeypoints
-                    if (body_keypoints.shape[0]) > 1:
-                        self.engine.say('This program does not support more than 1 person in frame!')
-                        self.engine.runAndWait()
+                #     datum.cvInputData = cv.resize(image, (128, 128))
+                #     opWrapper.emplaceAndPop(op.VectorDatum([datum]))
+                #
+                #     body_keypoints = datum.poseKeypoints
+                #     if (body_keypoints.shape[0]) > 1:
+                #         self.engine.say('This program does not support more than 1 person in frame!')
+                #         self.engine.runAndWait()
+                #         break
+                #
+                #     self.skeleton_seq.add_keypoints(body_keypoints)
+                #     # Display Image
+                #     output_image = datum.cvOutputData
+                    has_template_frame, template_image = template_stream.read()
+                    if not has_template_frame:
                         break
 
-                    self.skeleton_seq.add_keypoints(body_keypoints)
-                    # Display Image
-                    output_image = datum.cvOutputData
+                    writer.write(image)
 
-                    cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
+                    cv.putText(image, "Press 'q' to quit or 's' to save", (20, 30),
                     font, 1, (0, 0, 0), 1, cv.LINE_AA)
 
                     cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
-                    cv.resizeWindow('image', 1366, 784)
-                    cv.imshow('Openpose result', cv.flip(output_image, 1))
+                    cv.resizeWindow('image', 1280, 720)
+                    horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
+                                                 cv.resize(cv.flip(image, 1), (300, 300))), axis=1)
+                    cv.imshow('Openpose result', horizontal)
 
                     key = cv.waitKey(1)
                     if key == ord('q'):
                         print("Time taken:", str(datetime.now() - startTime))
-                        print('Skeletons collected :: ', len(skeleton_seq.skeletons))
-                        break
-                    elif key == ord('s'):
-                        if args.command == 'record':
-                            assert args.folder, "Argument --folder is required to save this recording as a json file."
-                            skeleton_seq.save_as_json(args.folder)
                         break
                 else:
-                    cv.namedWindow('Get into position', cv.WINDOW_NORMAL)
-                    cv.resizeWindow('image', 1366, 784)
-                    cv.imshow('Get into position', cv.flip(image, 1))
+                    cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
+                    cv.resizeWindow('image', 1280, 720)
+                    cv.imshow('Openpose result', cv.flip(image, 1))
                     cv.waitKey(1)
 
             stream.release()
+            template_stream.release()
+            writer.release()
             cv.destroyAllWindows()
         except Exception as e:
             print(e)
