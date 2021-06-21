@@ -26,6 +26,7 @@ class Compare:
         self.params = dict()
         self.params['model_pose'] = 'BODY_25'
         self.params['model_folder'] = "../openpose/models/"
+        self.params['net_resolution'] = "-656x368"
 
         self.skeleton_seq = SkeletonSequence()
         self.skeleton_seq_comp = SkeletonSequence()
@@ -75,31 +76,31 @@ class Compare:
                     break
 
                 if self.user_in_position:
-                #     datum.cvInputData = cv.resize(image, (128, 128))
-                #     opWrapper.emplaceAndPop(op.VectorDatum([datum]))
-                #
-                #     body_keypoints = datum.poseKeypoints
-                #     if (body_keypoints.shape[0]) > 1:
-                #         self.engine.say('This program does not support more than 1 person in frame!')
-                #         self.engine.runAndWait()
-                #         break
-                #
-                #     self.skeleton_seq.add_keypoints(body_keypoints)
-                #     # Display Image
-                #     output_image = datum.cvOutputData
+                    datum.cvInputData = image
+                    opWrapper.emplaceAndPop(op.VectorDatum([datum]))
+
+                    body_keypoints = datum.poseKeypoints
+                    if (body_keypoints.shape[0]) > 1:
+                        self.engine.say('This program does not support more than 1 person in frame!')
+                        self.engine.runAndWait()
+                        break
+
+                    self.skeleton_seq.add_keypoints(body_keypoints)
+                    # Display Image
+                    output_image = datum.cvOutputData
                     has_template_frame, template_image = template_stream.read()
                     if not has_template_frame:
                         break
 
                     writer.write(image)
 
-                    cv.putText(image, "Press 'q' to quit or 's' to save", (20, 30),
+                    cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
                     font, 1, (0, 0, 0), 1, cv.LINE_AA)
 
                     cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                     cv.resizeWindow('image', 1280, 720)
                     horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
-                                                 cv.resize(cv.flip(image, 1), (300, 300))), axis=1)
+                                                 cv.resize(cv.flip(output_image, 1), (300, 300))), axis=1)
                     cv.imshow('Openpose result', horizontal)
 
                     key = cv.waitKey(1)

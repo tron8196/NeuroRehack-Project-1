@@ -18,6 +18,7 @@ def set_params():
     params = dict()
     params['model_pose'] = 'BODY_25'
     params['model_folder'] = "../openpose/models/"
+    params['net_resolution'] = "-1x128"
 
     return params
 
@@ -55,7 +56,7 @@ if __name__ == '__main__':
                 if not has_frame:
                     break
 
-                datum.cvInputData = cv.resize(image, (128, 128))
+                datum.cvInputData = image
                 opWrapper.emplaceAndPop(op.VectorDatum([datum]))
 
                 body_keypoints = datum.poseKeypoints
