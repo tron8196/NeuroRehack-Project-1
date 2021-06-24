@@ -57,8 +57,8 @@ for key, values in skeleton_seq.sequence_data['joint_angles'].items():
     plt.plot(range(len(values)), values)
 
 
-distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles']['LArmpitJoint'],
-                        skeleton_seq.sequence_data['joint_angles']['RArmpitJoint'], dist=euclidean)
+distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles']['LKneeJoint'],
+                        skeleton_seq.sequence_data['joint_angles']['RKneeJoint'], dist=euclidean)
 
 print('DTW distance : ', distance)
 

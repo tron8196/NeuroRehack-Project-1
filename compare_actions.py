@@ -150,6 +150,7 @@ class Compare:
 
         print('Total no of frames processed: %d' % no_of_frames)
         skeleton_seq.smoothen()
+        skeleton_seq.save_as_json(output=True)
         output_vid_stream.release()
 
         return skeleton_seq

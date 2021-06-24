@@ -46,15 +46,18 @@ class SkeletonSequence():
             self.sequence_data['joint_angles'][key] = list(values)
 
 
-    def save_as_json(self, folder_name=None, sigma=1, filt_size=3):
+    def save_as_json(self, folder_name='no_action', sigma=1, filt_size=3, output=False):
         action_dir = os.path.join(json_recordings_dir, folder_name)
         file_name = "recording_"+ folder_name +"_{:%Y%m%dT%H%M%S}.json".format(datetime.now())
+
+        if output:
+            action_dir=ROOT_PATH
+            file_name = 'output.json'
 
         for skeleton in self.skeletons:
             for key, values in skeleton.joint_angles.items():
                 self.sequence_data['joint_angles'][key].append(values)
 
-        self.smoothen()
 
         with open(os.path.join(action_dir, file_name), 'w', encoding='utf-8') as write_file:
             json.dump(self.sequence_data, write_file, ensure_ascii=False, indent=4)

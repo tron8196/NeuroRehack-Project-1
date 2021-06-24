@@ -68,6 +68,7 @@ if __name__ == '__main__':
                 no_of_frames += 1
                 print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
 
+            skeleton_seq.smoothen()
             skeleton_seq.save_as_json(args.folder)
 
     except Exception as e:
