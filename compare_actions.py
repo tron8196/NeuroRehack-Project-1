@@ -31,7 +31,6 @@ class Compare:
         self.params['model_folder'] = "../openpose/models/"
         self.params['net_resolution'] = "-656x368"
 
-        self.skeleton_seq = SkeletonSequence()
         self.skeleton_seq_comp = SkeletonSequence()
 
         exercise_json_dir = os.path.join(json_recordings_dir, args.folder)
@@ -149,6 +148,7 @@ class Compare:
             no_of_frames += 1
             print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
 
+        print('Total no of frames processed: %d' % no_of_frames)
         skeleton_seq.smoothen()
         output_vid_stream.release()
 
@@ -164,9 +164,10 @@ class Compare:
                             self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
 
             aggregate_distance_score += distance
+            print('DTW score for ' + key + ': ', distance)
 
         print('Aggregate distance score: ', aggregate_distance_score)
-        print('DTW distance score : ', (aggregate_distance_score/no_of_joints))
+        print('Avg DTW distance score: ', (aggregate_distance_score/no_of_joints))
 
 
 if __name__ == '__main__':
