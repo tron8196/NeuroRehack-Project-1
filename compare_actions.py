@@ -4,9 +4,12 @@ import os
 import sys
 import argparse
 from skeleton_sequence import SkeletonSequence
-import pyttsx3
 import threading
+import pyttsx3
+
 import numpy as np
+from scipy.spatial.distance import euclidean
+from fastdtw import fastdtw
 
 try:
     import pyopenpose as op
@@ -39,13 +42,17 @@ class Compare:
 
         exercise_vid_dir = os.path.join(video_recordings_dir, args.folder)
         self.template_video = os.path.join(exercise_vid_dir, next(os.walk(exercise_vid_dir))[2][0])
-        print(self.template_video)
+
+        # Starting OpenPose
+        self.opWrapper = op.WrapperPython()
+        self.opWrapper.configure(self.params)
+        self.opWrapper.start()
 
 
     def countdown_text(self):
         self.engine.say('Please get to a position so that the camera can see your whole body.')
         # self.engine.say('10'), self.engine.say('9'), self.engine.say('8')
-        for i in range(3, -1, -1):
+        for i in range(7, -1, -1):
             self.engine.say(i)
 
         self.engine.runAndWait()
@@ -53,73 +60,113 @@ class Compare:
         self.user_in_position = True
 
 
-    def webcam_loop(self):
+    def passthrough_openpose(self, image):
         try:
-            # Starting OpenPose
-            opWrapper = op.WrapperPython()
-            opWrapper.configure(self.params)
-            opWrapper.start()
+            datum = op.Datum()
+            datum.cvInputData = image
+            self.opWrapper.emplaceAndPop(op.VectorDatum([datum]))
 
-            stream = cv.VideoCapture(0)
-            template_stream = cv.VideoCapture(self.template_video)
+            body_keypoints = datum.poseKeypoints
+            if (body_keypoints.shape[0]) > 1:
+                self.engine.say('This program does not support more than 1 person in frame!')
+                self.engine.runAndWait()
+                return None, None
+            # Display Image
+            output_image = datum.cvOutputData
 
-            video_codex = cv.VideoWriter_fourcc('F','M','P','4')
-            writer = cv.VideoWriter('./output.mp4', video_codex, 30.0, (640, 480))
-
-            font = cv.FONT_HERSHEY_SIMPLEX
-
-            startTime = datetime.now()
-            while True:
-                datum = op.Datum()
-                has_frame, image = stream.read()
-                if not has_frame:
-                    break
-
-                if self.user_in_position:
-                    datum.cvInputData = image
-                    opWrapper.emplaceAndPop(op.VectorDatum([datum]))
-
-                    body_keypoints = datum.poseKeypoints
-                    if (body_keypoints.shape[0]) > 1:
-                        self.engine.say('This program does not support more than 1 person in frame!')
-                        self.engine.runAndWait()
-                        break
-
-                    self.skeleton_seq.add_keypoints(body_keypoints)
-                    # Display Image
-                    output_image = datum.cvOutputData
-                    has_template_frame, template_image = template_stream.read()
-                    if not has_template_frame:
-                        break
-
-                    writer.write(image)
-
-                    cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
-                    font, 1, (0, 0, 0), 1, cv.LINE_AA)
-
-                    cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
-                    cv.resizeWindow('image', 1280, 720)
-                    horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
-                                                 cv.resize(cv.flip(output_image, 1), (300, 300))), axis=1)
-                    cv.imshow('Openpose result', horizontal)
-
-                    key = cv.waitKey(1)
-                    if key == ord('q'):
-                        print("Time taken:", str(datetime.now() - startTime))
-                        break
-                else:
-                    cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
-                    cv.resizeWindow('image', 1280, 720)
-                    cv.imshow('Openpose result', cv.flip(image, 1))
-                    cv.waitKey(1)
-
-            stream.release()
-            template_stream.release()
-            writer.release()
-            cv.destroyAllWindows()
+            return body_keypoints, output_image
         except Exception as e:
             print(e)
             sys.exit(-1)
+
+
+    def webcam_loop(self):
+        stream = cv.VideoCapture(0)
+        template_stream = cv.VideoCapture(self.template_video)
+
+        video_codex = cv.VideoWriter_fourcc('F','M','P','4')
+        writer = cv.VideoWriter('./output.mp4', video_codex, 30.0, (640, 480))
+
+        font = cv.FONT_HERSHEY_SIMPLEX
+
+        while True:
+            has_frame, image = stream.read()
+            if not has_frame:
+                break
+
+            if self.user_in_position:
+                body_keypoints, output_image = self.passthrough_openpose(image)
+                if output_image is None:
+                    break
+
+                # Display Image
+                has_template_frame, template_image = template_stream.read()
+                if not has_template_frame:
+                    break
+
+                writer.write(image)
+
+                cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
+                font, 1, (0, 0, 0), 1, cv.LINE_AA)
+
+                cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
+                cv.resizeWindow('image', 1280, 720)
+                horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
+                                             cv.resize(cv.flip(output_image, 1), (300, 300))), axis=1)
+                cv.imshow('Openpose result', horizontal)
+
+                key = cv.waitKey(1)
+                if key == ord('q'):
+                    print("Time taken:", str(datetime.now() - startTime))
+                    break
+            else:
+                cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
+                cv.resizeWindow('image', 1280, 720)
+                cv.imshow('Openpose result', cv.flip(image, 1))
+                cv.waitKey(1)
+
+        stream.release()
+        template_stream.release()
+        writer.release()
+        cv.destroyAllWindows()
+
+
+    def process_output_video(self):
+        output_vid_stream = cv.VideoCapture('./output.mp4')
+        skeleton_seq = SkeletonSequence()
+
+        no_of_frames = 0
+        while True:
+            has_frame, image = output_vid_stream.read()
+            if not has_frame:
+                break
+
+            body_keypoints, _ = self.passthrough_openpose(image)
+            if body_keypoints is None:
+                break
+
+            skeleton_seq.add_keypoints(body_keypoints)
+            no_of_frames += 1
+            print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
+
+        skeleton_seq.smoothen()
+        output_vid_stream.release()
+
+        return skeleton_seq
+
+
+    def calc_dtw_score(self, skeleton_seq):
+        no_of_joints = len(skeleton_seq.sequence_data['joint_angles'].keys())
+        aggregate_distance_score = 0
+
+        for key in skeleton_seq.sequence_data['joint_angles'].keys():
+            distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles'][key],
+                            self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
+
+            aggregate_distance_score += distance
+
+        print('Aggregate distance score: ', aggregate_distance_score)
+        print('DTW distance score : ', (aggregate_distance_score/no_of_joints))
 
 
 if __name__ == '__main__':
@@ -128,17 +175,23 @@ if __name__ == '__main__':
 
     parser.add_argument('--folder', help='Name of an action folder inside of recordings directory.')
 
+    parser.add_argument('--direct_compare', action='store_true')
+
     args = parser.parse_args()
 
     assert args.folder, "Argument --folder is required to find json recordings of an action."
 
     comp = Compare(args)
 
-    webcam_p = threading.Thread(target=comp.webcam_loop)
-    countdown_p = threading.Thread(target=comp.countdown_text)
+    if not args.direct_compare:
+        webcam_p = threading.Thread(target=comp.webcam_loop)
+        countdown_p = threading.Thread(target=comp.countdown_text)
 
-    webcam_p.start()
-    countdown_p.start()
+        webcam_p.start()
+        countdown_p.start()
 
-    countdown_p.join()
-    webcam_p.join()
+        countdown_p.join()
+        webcam_p.join()
+
+    skeleton_seq = comp.process_output_video()
+    comp.calc_dtw_score(skeleton_seq)

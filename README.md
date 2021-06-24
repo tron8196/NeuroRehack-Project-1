@@ -30,6 +30,11 @@ The expected folder structure is:
   - action2
   ...
 
+If you've already generated an output video by recording your action using the command above and simply want the program to calculate a score, then set the `--direct_compare` flag like so:
+
+```
+python compare.py --folder=action1 --direct_compare
+```
 
 ## Relevant Links
 ### Recommended tool for recording and editing action videos:-

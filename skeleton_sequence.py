@@ -34,6 +34,18 @@ class SkeletonSequence():
         sf = open(folder_name)
         self.sequence_data = json.load(sf)
 
+    def smoothen(self, kernel_size=3, sigma=1):
+
+        for key, values in self.sequence_data['joint_angles'].items():
+            # removing NaNs
+            values = [v for v in values if v==v]
+
+            values = medfilt(volume=values, kernel_size=kernel_size)
+            values = gaussian_filter(input=values, sigma=sigma)
+
+            self.sequence_data['joint_angles'][key] = list(values)
+
+
     def save_as_json(self, folder_name=None, sigma=1, filt_size=3):
         action_dir = os.path.join(json_recordings_dir, folder_name)
         file_name = "recording_"+ folder_name +"_{:%Y%m%dT%H%M%S}.json".format(datetime.now())
@@ -42,15 +54,7 @@ class SkeletonSequence():
             for key, values in skeleton.joint_angles.items():
                 self.sequence_data['joint_angles'][key].append(values)
 
-        for key, values in self.sequence_data['joint_angles'].items():
-            # removing NaNs
-            values = [v for v in values if v==v]
-
-            values = medfilt(volume=values, kernel_size=filt_size)
-            values = gaussian_filter(input=values, sigma=sigma)
-
-            self.sequence_data['joint_angles'][key] = list(values)
-
+        self.smoothen()
 
         with open(os.path.join(action_dir, file_name), 'w', encoding='utf-8') as write_file:
             json.dump(self.sequence_data, write_file, ensure_ascii=False, indent=4)
