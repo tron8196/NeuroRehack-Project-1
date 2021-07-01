@@ -37,8 +37,6 @@ class SkeletonSequence():
     def smoothen(self, kernel_size=3, sigma=1):
 
         for key, values in self.sequence_data['joint_angles'].items():
-            # removing NaNs
-            values = [v for v in values if v==v]
 
             values = medfilt(volume=values, kernel_size=kernel_size)
             values = gaussian_filter(input=values, sigma=sigma)

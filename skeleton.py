@@ -39,7 +39,14 @@ class Skeleton:
     def calc_joint_angle(self, a, b, c):
         ba = a - b
         bc = c - b
-        cosine = np.dot(ba, bc) / ( np.linalg.norm(ba) * np.linalg.norm(bc) )
+
+        dot_product = np.dot(ba, bc)
+        magnitude =  ( np.linalg.norm(ba) * np.linalg.norm(bc) )
+
+        if not magnitude:
+            return 0.0
+
+        cosine = dot_product / magnitude
 
         return np.float64(np.arccos(cosine))
 
