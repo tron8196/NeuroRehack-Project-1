@@ -33,6 +33,7 @@ class Compare:
 
         self.skeleton_seq_comp = SkeletonSequence()
 
+        self.folder_name = args.folder
         exercise_json_dir = os.path.join(json_recordings_dir, args.folder)
         file_name = next(os.walk(exercise_json_dir))[2][0]
         self.skeleton_seq_comp.load_from_json(os.path.join(exercise_json_dir, file_name))
@@ -49,6 +50,9 @@ class Compare:
 
 
     def countdown_text(self):
+        exercise_name = ' '.join(self.folder_name.split('_'))
+        self.engine.say('You are about to perform.')
+        self.engine.say(exercise_name)
         self.engine.say('Please get to a position so that the camera can see your whole body.')
         # self.engine.say('10'), self.engine.say('9'), self.engine.say('8')
         for i in range(7, -1, -1):
@@ -105,8 +109,8 @@ class Compare:
 
                 writer.write(image)
 
-                cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
-                font, 1, (0, 0, 0), 1, cv.LINE_AA)
+                # cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
+                # font, 1, (0, 0, 0), 1, cv.LINE_AA)
 
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)
