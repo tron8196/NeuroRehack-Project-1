@@ -1,10 +1,10 @@
 # NeuroRehack-Project-1
 
-low-cost audio-visual feedback system for neuro-rehabilitation exercise verfication and report generation.
+low cost, audio-visual feedback system for neuro-rehabilitation exercise verification and report generation.
 
 # Usage
 
-To process the video file of an action, so as to store salient data from openpose as json, you'll need to provide the action folder's name as an argument.
+To process the video file of an action, so as to store salient data from openpose as json, you'll need to provide the action folder's name as an argument:
 
   ```
   python create_json_recordings.py --folder=action1
@@ -30,10 +30,10 @@ The expected folder structure is:
   - action2
   ...
 
-If you've already generated an output video by recording your action using the command above and simply want the program to calculate a score, then set the `--direct_compare` flag like so:
+If you've already generated an output video by recording your action using the command above and simply want the program to calculate a score, then set the `--no_webcam` flag:
 
 ```
-python compare.py --folder=action1 --direct_compare
+python compare.py --folder=action1 --no_webcam
 ```
 
 ## Relevant Links

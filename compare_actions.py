@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--folder', help='Name of an action folder inside of recordings directory.')
 
-    parser.add_argument('--direct_compare', action='store_true')
+    parser.add_argument('--no_webcam', action='store_true')
 
     args = parser.parse_args()
 
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 
     comp = Compare(args)
 
-    if not args.direct_compare:
+    if not args.no_webcam:
         webcam_p = threading.Thread(target=comp.webcam_loop)
         countdown_p = threading.Thread(target=comp.countdown_text)
 
