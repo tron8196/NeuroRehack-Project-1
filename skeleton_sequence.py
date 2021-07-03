@@ -14,12 +14,16 @@ class SkeletonSequence():
         # patient data, including joint angle sequence
         self.sequence_data = {}
         self.sequence_data['joint_angles'] = {
+            'LNeckJoint': [],
+            'RNeckJoint': [],
             'LArmpitJoint': [],
             'RArmpitJoint': [],
             'LElbowJoint':  [],
             'RElbowJoint':  [],
             'LHipJoint':    [],
             'RHipJoint':    [],
+            'LThighJoint':  [],
+            'RThighJoint':  [],
             'LKneeJoint':   [],
             'RKneeJoint':   []
         }

@@ -73,12 +73,16 @@ class Skeleton:
 
     def calculate_joint_angles(self):
         self.joint_angles = {
+            'LNeckJoint': self.calc_joint_angle(self.body_kp['Nose'], self.body_kp['Neck'], self.body_kp['LShoulder']),
+            'RNeckJoint': self.calc_joint_angle(self.body_kp['Nose'], self.body_kp['Neck'], self.body_kp['RShoulder']),
             'LArmpitJoint': self.calc_joint_angle(self.body_kp['Neck'], self.body_kp['LShoulder'], self.body_kp['LElbow']),
             'RArmpitJoint': self.calc_joint_angle(self.body_kp['Neck'], self.body_kp['RShoulder'], self.body_kp['RElbow']),
             'LElbowJoint':  self.calc_joint_angle(self.body_kp['LShoulder'], self.body_kp['LElbow'], self.body_kp['LWrist']),
             'RElbowJoint':  self.calc_joint_angle(self.body_kp['RShoulder'], self.body_kp['RElbow'], self.body_kp['RWrist']),
-            'LHipJoint':    self.calc_joint_angle(self.body_kp['Midhip'], self.body_kp['LHip'], self.body_kp['LKnee']),
-            'RHipJoint':    self.calc_joint_angle(self.body_kp['Midhip'], self.body_kp['RHip'], self.body_kp['RKnee']),
+            'LHipJoint':    self.calc_joint_angle(self.body_kp['Neck'], self.body_kp['Midhip'], self.body_kp['LHip']),
+            'RHipJoint':    self.calc_joint_angle(self.body_kp['Neck'], self.body_kp['Midhip'], self.body_kp['RHip']),
+            'LThighJoint': self.calc_joint_angle(self.body_kp['Midhip'], self.body_kp['LHip'], self.body_kp['LKnee']),
+            'RThighJoint': self.calc_joint_angle(self.body_kp['Midhip'], self.body_kp['RHip'], self.body_kp['RKnee']),
             'LKneeJoint':   self.calc_joint_angle(self.body_kp['LHip'], self.body_kp['LHip'], self.body_kp['LAnkle']),
             'RKneeJoint':   self.calc_joint_angle(self.body_kp['RHip'], self.body_kp['RHip'], self.body_kp['RAnkle'])
         }
