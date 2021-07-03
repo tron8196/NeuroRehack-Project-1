@@ -21,15 +21,23 @@ ROOT_PATH = './'
 json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings')
 video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings')
 
+import json
+cf = open('./config.json')
+json_config = json.load(cf)
+
+NECK_INDEX = json_config['neck_index']
+SHOULDER_LEFT_INDEX = json_config['shoulder_left_index']
+SHOULDER_RIGHT_INDEX = json_config['shoulder_right_index']
+
 class Compare:
     def __init__(self, args):
         self.engine = pyttsx3.init()
         self.engine.setProperty('rate', 140)
 
         self.params = dict()
-        self.params['model_pose'] = 'BODY_25'
-        self.params['model_folder'] = "../openpose/models/"
-        self.params['net_resolution'] = "-656x368"
+        self.params['model_pose'] = json_config['model_pose']
+        self.params['model_folder'] = json_config['model_folder']
+        self.params['net_resolution'] = json_config['net_resolution']
 
         self.skeleton_seq_comp = SkeletonSequence()
 
@@ -48,6 +56,15 @@ class Compare:
         self.opWrapper.configure(self.params)
         self.opWrapper.start()
 
+        self.pose_pairs = [
+            [1, 0], [1, 2], [1, 5], [1, 8],
+            [3, 2], [3, 4],
+            [6, 5], [6, 7],
+            [8, 9], [8, 12],
+            [10, 9], [10, 11],
+            [13, 12], [13, 14]
+        ]
+
 
     def countdown_text(self):
         exercise_name = ' '.join(self.folder_name.split('_'))
@@ -55,7 +72,7 @@ class Compare:
         self.engine.say(exercise_name)
         self.engine.say('Please get to a position so that the camera can see your whole body.')
         # self.engine.say('10'), self.engine.say('9'), self.engine.say('8')
-        for i in range(7, -1, -1):
+        for i in range(json_config['countdown_duration'], -1, -1):
             self.engine.say(i)
 
         self.engine.runAndWait()
@@ -109,8 +126,8 @@ class Compare:
 
                 writer.write(image)
 
-                # cv.putText(output_image, "Press 'q' to quit or 's' to save", (20, 30),
-                # font, 1, (0, 0, 0), 1, cv.LINE_AA)
+                # draw skeleton
+                
 
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)

@@ -1,8 +1,12 @@
 import numpy as np
 
-NECK_INDEX = 1
-SHOULDER_LEFT_INDEX = 2
-SHOULDER_RIGHT_INDEX = 5
+import json
+cf = open('./config.json')
+json_config = json.load(cf)
+
+NECK_INDEX = json_config['neck_index']
+SHOULDER_LEFT_INDEX = json_config['shoulder_left_index']
+SHOULDER_RIGHT_INDEX = json_config['shoulder_right_index']
 
 class Skeleton:
     def __init__(self, data, load_from_json=False):
