@@ -3,9 +3,11 @@ import cv2 as cv
 import os
 import sys
 import argparse
-from skeleton_sequence import SkeletonSequence
 import threading
 import pyttsx3
+
+from skeleton_sequence import SkeletonSequence
+from skeleton import Skeleton
 
 import numpy as np
 from scipy.spatial.distance import euclidean
@@ -86,15 +88,20 @@ class Compare:
             datum.cvInputData = image
             self.opWrapper.emplaceAndPop(op.VectorDatum([datum]))
 
-            body_keypoints = datum.poseKeypoints
-            if (body_keypoints.shape[0]) > 1:
+            pose_kp = datum.poseKeypoints
+            skeleton = None
+            output_image = None
+            if (pose_kp.shape[0]) > 1:
                 self.engine.say('This program does not support more than 1 person in frame!')
                 self.engine.runAndWait()
-                return None, None
+
+                return skeleton, output_image
+
+            skeleton = Skeleton(pose_kp)
             # Display Image
             output_image = datum.cvOutputData
 
-            return body_keypoints, output_image
+            return skeleton, output_image
         except Exception as e:
             print(e)
             sys.exit(-1)
@@ -115,7 +122,7 @@ class Compare:
                 break
 
             if self.user_in_position:
-                body_keypoints, output_image = self.passthrough_openpose(image)
+                skeleton, output_image = self.passthrough_openpose(image)
                 if output_image is None:
                     break
 
@@ -126,13 +133,22 @@ class Compare:
 
                 writer.write(image)
 
+                keypoints = skeleton.keypoints
                 # draw skeleton
-                
+                for pair in self.pose_pairs:
+                    point1_idx = pair[0]
+                    point2_idx = pair[1]
+
+                    point1_2D = (int(keypoints[point1_idx][0]), int(keypoints[point1_idx][1]))
+                    point2_2D = (int(keypoints[point2_idx][0]), int(keypoints[point2_idx][1]))
+
+                    if point1_2D[0] and point2_2D[0] and point1_2D[1] and point2_2D[1]:
+                        cv.line(image, point1_2D, point2_2D, (0, 255, 0), 4)
 
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)
                 horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
-                                             cv.resize(cv.flip(output_image, 1), (300, 300))), axis=1)
+                                             cv.resize(cv.flip(image, 1), (300, 300))), axis=1)
                 cv.imshow('Openpose result', horizontal)
 
                 key = cv.waitKey(1)
@@ -161,11 +177,12 @@ class Compare:
             if not has_frame:
                 break
 
-            body_keypoints, _ = self.passthrough_openpose(image)
-            if body_keypoints is None:
+            skeleton, _ = self.passthrough_openpose(image)
+
+            if skeleton is None:
                 break
 
-            skeleton_seq.add_keypoints(body_keypoints)
+            skeleton_seq.add_keypoints(skeleton.keypoints)
             no_of_frames += 1
             print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
 

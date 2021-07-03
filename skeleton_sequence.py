@@ -60,9 +60,7 @@ class SkeletonSequence():
             for key, values in skeleton.joint_angles.items():
                 self.sequence_data['joint_angles'][key].append(values)
 
-            self.sequence_data['normalized_keypoints'].append(skeleton.normalized_bk)
-
-        print('normalized keypoints: ', self.sequence_data['normalized_keypoints'])
+            self.sequence_data['normalized_keypoints'].append(skeleton.normalized_keypoints)
 
 
         with open(os.path.join(action_dir, file_name), 'w', encoding='utf-8') as write_file:
