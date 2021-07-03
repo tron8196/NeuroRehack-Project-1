@@ -23,16 +23,20 @@ class SkeletonSequence():
             'LKneeJoint':   [],
             'RKneeJoint':   []
         }
+        self.sequence_data['normalized_keypoints'] = []
 
         # joint angle sequences
         self.skeletons = []
 
+
     def add_keypoints(self, body_keypoints):
         self.skeletons.append(Skeleton(body_keypoints))
+
 
     def load_from_json(self, folder_name=None):
         sf = open(folder_name)
         self.sequence_data = json.load(sf)
+
 
     def smoothen(self, kernel_size=3, sigma=1):
 
@@ -55,6 +59,10 @@ class SkeletonSequence():
         for skeleton in self.skeletons:
             for key, values in skeleton.joint_angles.items():
                 self.sequence_data['joint_angles'][key].append(values)
+
+            self.sequence_data['normalized_keypoints'].append(skeleton.normalized_bk)
+
+        print('normalized keypoints: ', self.sequence_data['normalized_keypoints'])
 
 
         with open(os.path.join(action_dir, file_name), 'w', encoding='utf-8') as write_file:

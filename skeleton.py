@@ -1,39 +1,55 @@
 import numpy as np
 
+NECK_INDEX = 1
+SHOULDER_LEFT_INDEX = 2
+SHOULDER_RIGHT_INDEX = 5
+
 class Skeleton:
     def __init__(self, data, load_from_json=False):
         if load_from_json:
             self.joint_angles = data
         else:
-            bk = data.reshape(25, 3)
+            keypoints = data.reshape(25, 3)
             self.body_kp = {
-                'Nose': bk[0],
-                'Neck': bk[1],
-                'RShoulder': bk[2],
-                'RElbow': bk[3],
-                'RWrist': bk[4],
-                'LShoulder': bk[5],
-                'LElbow': bk[6],
-                'LWrist': bk[7],
-                'Midhip': bk[8],
-                'RHip': bk[9],
-                'RKnee': bk[10],
-                'RAnkle': bk[11],
-                'LHip': bk[12],
-                'LKnee': bk[13],
-                'LAnkle': bk[14],
-                'REye': bk[15],
-                'LEye': bk[16],
-                'REar': bk[17],
-                'LEar': bk[18],
-                'LBigToe': bk[19],
-                'LSmallToe': bk[20],
-                'LHeel': bk[21],
-                'RBigToe': bk[22],
-                'RSmallToe': bk[23],
-                'RHeel': bk[24]
+                'Nose': keypoints[0],
+                'Neck': keypoints[1],
+                'RShoulder': keypoints[2],
+                'RElbow': keypoints[3],
+                'RWrist': keypoints[4],
+                'LShoulder': keypoints[5],
+                'LElbow': keypoints[6],
+                'LWrist': keypoints[7],
+                'Midhip': keypoints[8],
+                'RHip': keypoints[9],
+                'RKnee': keypoints[10],
+                'RAnkle': keypoints[11],
+                'LHip': keypoints[12],
+                'LKnee': keypoints[13],
+                'LAnkle': keypoints[14],
+                'REye': keypoints[15],
+                'LEye': keypoints[16],
+                'REar': keypoints[17],
+                'LEar': keypoints[18],
+                'LBigToe': keypoints[19],
+                'LSmallToe': keypoints[20],
+                'LHeel': keypoints[21],
+                'RBigToe': keypoints[22],
+                'RSmallToe': keypoints[23],
+                'RHeel': keypoints[24]
             }
             self.calculate_joint_angles()
+
+            shoulder_vector = abs(np.subtract(keypoints[SHOULDER_LEFT_INDEX], keypoints[SHOULDER_RIGHT_INDEX]))
+            self.shoulder_dist = np.linalg.norm(shoulder_vector)
+            self.normalize_body_points(keypoints)
+
+
+    def normalize_body_points(self, keypoints):
+        self.normalized_bk = []
+
+        for point in keypoints:
+            normalized_point = np.divide(np.subtract(point, keypoints[NECK_INDEX]), self.shoulder_dist)
+            self.normalized_bk.append(list(np.float64(normalized_point)))
 
 
     def calc_joint_angle(self, a, b, c):
