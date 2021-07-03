@@ -195,18 +195,35 @@ class Compare:
 
 
     def calc_dtw_score(self, skeleton_seq):
-        no_of_joints = len(skeleton_seq.sequence_data['joint_angles'].keys())
-        aggregate_distance_score = 0
+        upper_joint_angles = ['LNeckJoint', 'RNeckJoint', 'LArmpitJoint', 'RArmpitJoint',
+        'LElbowJoint', 'RElbowJoint','LHipJoint','RHipJoint']
 
-        for key in skeleton_seq.sequence_data['joint_angles'].keys():
+        agg_score = 0
+        no_of_joints = len(upper_joint_angles)
+        for key in upper_joint_angles:
             distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles'][key],
                             self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
 
-            aggregate_distance_score += distance
+            agg_score += distance
             print('DTW score for ' + key + ': ', distance)
 
-        print('Aggregate distance score: ', aggregate_distance_score)
-        print('Avg DTW distance score: ', (aggregate_distance_score/no_of_joints))
+        print('Upper body aggregate distance score: ', agg_score)
+        print('Upper body avg DTW distance score: ', (agg_score/no_of_joints))
+
+
+        lower_joint_angles = ['LThighJoint', 'RThighJoint', 'LKneeJoint', 'RKneeJoint']
+
+        agg_score = 0
+        no_of_joints = len(lower_joint_angles)
+        for key in lower_joint_angles:
+            distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles'][key],
+                            self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
+
+            agg_score += distance
+            print('DTW score for ' + key + ': ', distance)
+
+        print('Lower body aggregate distance score: ', agg_score)
+        print('Lower body avg DTW distance score: ', (agg_score/no_of_joints))
 
 
 if __name__ == '__main__':
