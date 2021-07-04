@@ -9,6 +9,8 @@ import pyttsx3
 from skeleton_sequence import SkeletonSequence
 from skeleton import Skeleton
 
+import math
+from colour import Color
 import numpy as np
 from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
@@ -30,6 +32,9 @@ json_config = json.load(cf)
 NECK_INDEX = json_config['neck_index']
 SHOULDER_LEFT_INDEX = json_config['shoulder_left_index']
 SHOULDER_RIGHT_INDEX = json_config['shoulder_right_index']
+
+green = Color("green")
+colors = list(green.range_to(Color("red"), 9))
 
 class Compare:
     def __init__(self, args):
@@ -116,10 +121,16 @@ class Compare:
 
         font = cv.FONT_HERSHEY_SIMPLEX
 
+        frame_count = len(self.skeleton_seq_comp.sequence_data['normalized_keypoints'])
+        frame_index = 0
+        frame_increment = json_config['template_vid_fps'] / json_config['openpose_vid_fps']
+
         while True:
             has_frame, image = stream.read()
             if not has_frame:
                 break
+
+            frame_index_int = math.floor(frame_index)
 
             if self.user_in_position:
                 skeleton, output_image = self.passthrough_openpose(image)
@@ -133,17 +144,37 @@ class Compare:
 
                 writer.write(image)
 
-                keypoints = skeleton.keypoints
-                # draw skeleton
-                for pair in self.pose_pairs:
-                    point1_idx = pair[0]
-                    point2_idx = pair[1]
+                if frame_index_int < frame_count:
+                    keypoints = skeleton.keypoints
 
-                    point1_2D = (int(keypoints[point1_idx][0]), int(keypoints[point1_idx][1]))
-                    point2_2D = (int(keypoints[point2_idx][0]), int(keypoints[point2_idx][1]))
+                    # draw skeleton
+                    for pair in self.pose_pairs:
+                        point1_idx = pair[0]
+                        point2_idx = pair[1]
 
-                    if point1_2D[0] and point2_2D[0] and point1_2D[1] and point2_2D[1]:
-                        cv.line(image, point1_2D, point2_2D, (0, 255, 0), 4)
+                        point1_2D = (int(keypoints[point1_idx][0]), int(keypoints[point1_idx][1]))
+                        point2_2D = (int(keypoints[point2_idx][0]), int(keypoints[point2_idx][1]))
+
+                        if point1_2D[0] and point2_2D[0] and point1_2D[1] and point2_2D[1]:
+                            # distance score
+                            point1_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][frame_index_int][point1_idx])
+                            point1 = np.array(skeleton.normalized_keypoints[point1_idx])
+                            point1_dist = np.linalg.norm(point1 - point1_compare)
+
+                            point2_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][frame_index_int][point2_idx])
+                            point2 = np.array(skeleton.normalized_keypoints[point2_idx])
+                            point2_dist = np.linalg.norm(point2 - point2_compare)
+
+                            dist_score = (point1_dist + point2_dist) / 2
+                            dist_score = int(dist_score*10)
+                            if dist_score > 8:
+                                dist_score = 8
+
+                            print('DIST SCORE :: ', dist_score)
+
+                            cv.line(image, point1_2D, point2_2D, tuple(255*t for t in colors[dist_score].rgb[::-1]), 5)
+
+                    frame_index += frame_increment
 
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)
@@ -207,7 +238,6 @@ class Compare:
             agg_score += distance
             print('DTW score for ' + key + ': ', distance)
 
-        print('Upper body aggregate distance score: ', agg_score)
         print('Upper body avg DTW distance score: ', (agg_score/no_of_joints))
 
 
@@ -222,7 +252,6 @@ class Compare:
             agg_score += distance
             print('DTW score for ' + key + ': ', distance)
 
-        print('Lower body aggregate distance score: ', agg_score)
         print('Lower body avg DTW distance score: ', (agg_score/no_of_joints))
 
 

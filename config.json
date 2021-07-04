@@ -6,5 +6,8 @@
     "countdown_duration": 3,
     "model_pose": "BODY_25",
     "model_folder": "../openpose/models/",
-    "net_resolution": "-656x368"
+    "net_resolution": "-656x368",
+
+    "template_vid_fps": 10,
+    "openpose_vid_fps": 10
 }
