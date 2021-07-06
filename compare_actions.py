@@ -8,6 +8,8 @@ import pyttsx3
 
 from skeleton_sequence import SkeletonSequence
 from skeleton import Skeleton
+from video_get import VideoGet
+from fps import FPS
 
 import math
 from colour import Color
@@ -113,40 +115,41 @@ class Compare:
 
 
     def webcam_loop(self):
-        stream = cv.VideoCapture(0)
+        fps = FPS().start()
+        stream = VideoGet(0).start()
         template_stream = cv.VideoCapture(self.template_video)
 
-        video_codex = cv.VideoWriter_fourcc('F','M','P','4')
-        writer = cv.VideoWriter('./output.mp4', video_codex, 30.0, (640, 480))
+        video_codex = cv.VideoWriter_fourcc(*'XVID')
+        writer = cv.VideoWriter('./output.avi', video_codex, 30.0, (640, 480))
 
         font = cv.FONT_HERSHEY_SIMPLEX
 
-        frame_count = len(self.skeleton_seq_comp.sequence_data['normalized_keypoints'])
-        frame_index = 0
-        frame_increment = json_config['template_vid_fps'] / json_config['openpose_vid_fps']
+        total_template_frames = len(self.skeleton_seq_comp.sequence_data['normalized_keypoints'])
+        template_frame_index = 0
 
         while True:
-            has_frame, image = stream.read()
-            if not has_frame:
-                break
+            image = stream.frame
 
-            frame_index_int = math.floor(frame_index)
+            if cv.waitKey(1) == ord('q') or stream.stopped:
+                stream.stop()
+                break
 
             if self.user_in_position:
                 skeleton, output_image = self.passthrough_openpose(image)
                 if output_image is None:
+                    stream.stop()
                     break
 
                 # Display Image
-                has_template_frame, template_image = template_stream.read()
-                if not has_template_frame:
+                has_frame, template_image = template_stream.read()
+                if not has_frame:
+                    stream.stop()
                     break
 
                 writer.write(image)
 
-                if frame_index_int < frame_count:
+                if template_frame_index < total_template_frames:
                     keypoints = skeleton.keypoints
-
                     # draw skeleton
                     for pair in self.pose_pairs:
                         point1_idx = pair[0]
@@ -157,11 +160,11 @@ class Compare:
 
                         if point1_2D[0] and point2_2D[0] and point1_2D[1] and point2_2D[1]:
                             # distance score
-                            point1_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][frame_index_int][point1_idx])
+                            point1_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point1_idx])
                             point1 = np.array(skeleton.normalized_keypoints[point1_idx])
                             point1_dist = np.linalg.norm(point1 - point1_compare)
 
-                            point2_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][frame_index_int][point2_idx])
+                            point2_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point2_idx])
                             point2 = np.array(skeleton.normalized_keypoints[point2_idx])
                             point2_dist = np.linalg.norm(point2 - point2_compare)
 
@@ -174,28 +177,25 @@ class Compare:
 
                             cv.line(image, point1_2D, point2_2D, tuple(255*t for t in colors[dist_score].rgb[::-1]), 5)
 
-                    frame_index += frame_increment
+                    template_frame_index+=1
 
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)
                 horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
                                              cv.resize(cv.flip(image, 1), (300, 300))), axis=1)
                 cv.imshow('Openpose result', horizontal)
-
-                key = cv.waitKey(1)
-                if key == ord('q'):
-                    print("Time taken:", str(datetime.now() - startTime))
-                    break
             else:
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)
                 cv.imshow('Openpose result', cv.flip(image, 1))
-                cv.waitKey(1)
 
-        stream.release()
+            print('FPS of video: %d' % fps.counts_per_sec(), end="\r", flush=True)
+            fps.increment()
+
         template_stream.release()
         writer.release()
         cv.destroyAllWindows()
+        print('FPS of video: %d' % fps.counts_per_sec())
 
 
     def process_output_video(self):
