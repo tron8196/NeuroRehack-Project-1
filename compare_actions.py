@@ -8,7 +8,7 @@ import pyttsx3
 
 from skeleton_sequence import SkeletonSequence
 from skeleton import Skeleton
-from video_get import VideoGet
+from webcam_stream import WebcamStream
 from fps import FPS
 
 import math
@@ -116,8 +116,8 @@ class Compare:
 
     def webcam_loop(self):
         fps = FPS().start()
-        stream = VideoGet(0).start()
-        template_stream = cv.VideoCapture(self.template_video)
+        webcam_stream = WebcamStream().start()
+        template_video_stream = cv.VideoCapture(self.template_video)
 
         video_codex = cv.VideoWriter_fourcc(*'XVID')
         writer = cv.VideoWriter('./output.avi', video_codex, 30.0, (640, 480))
@@ -128,22 +128,22 @@ class Compare:
         template_frame_index = 0
 
         while True:
-            image = stream.frame
+            image = webcam_stream.frame
 
-            if cv.waitKey(1) == ord('q') or stream.stopped:
-                stream.stop()
+            if cv.waitKey(1) == ord('q') or webcam_stream.stopped:
+                webcam_stream.stop()
                 break
 
             if self.user_in_position:
                 skeleton, output_image = self.passthrough_openpose(image)
                 if output_image is None:
-                    stream.stop()
+                    webcam_stream.stop()
                     break
 
                 # Display Image
-                has_frame, template_image = template_stream.read()
+                has_frame, template_image = template_video_stream.read()
                 if not has_frame:
-                    stream.stop()
+                    webcam_stream.stop()
                     break
 
                 writer.write(image)
@@ -192,14 +192,14 @@ class Compare:
             print('FPS of video: %d' % fps.counts_per_sec(), end="\r", flush=True)
             fps.increment()
 
-        template_stream.release()
+        template_video_stream.release()
         writer.release()
         cv.destroyAllWindows()
         print('FPS of video: %d' % fps.counts_per_sec())
 
 
     def process_output_video(self):
-        output_vid_stream = cv.VideoCapture('./output.mp4')
+        output_vid_stream = cv.VideoCapture('./output.avi')
         skeleton_seq = SkeletonSequence()
 
         no_of_frames = 0

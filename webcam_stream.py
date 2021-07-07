@@ -1,9 +1,9 @@
 import cv2 as cv
 from threading import Thread
 
-class VideoGet:
+class WebcamStream:
     """
-    Class that continuously gets frames from a VideoCapture object
+    Class that continuously gets frames from a webcam
     with a dedicated thread.
     """
 
