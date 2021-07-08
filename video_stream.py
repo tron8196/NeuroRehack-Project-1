@@ -2,9 +2,9 @@ import cv2 as cv
 from threading import Thread
 import time
 
-class WebcamStream:
+class VideoStream:
     """
-    Class that continuously gets frames from a webcam
+    Class that continuously gets frames from a video file
     with a dedicated thread.
     """
 
@@ -12,9 +12,11 @@ class WebcamStream:
         self.stream = cv.VideoCapture(src)
         (self.grabbed, self.frame) = self.stream.read()
         self.stopped = False
+        self.started = False
 
     def start(self):
         Thread(target=self.get, args=()).start()
+        self.started = True
         return self
 
     def get(self):

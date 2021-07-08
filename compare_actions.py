@@ -9,6 +9,7 @@ import pyttsx3
 from skeleton_sequence import SkeletonSequence
 from skeleton import Skeleton
 from webcam_stream import WebcamStream
+from video_stream import VideoStream
 from fps import FPS
 
 import math
@@ -117,7 +118,7 @@ class Compare:
     def webcam_loop(self):
         fps = FPS().start()
         webcam_stream = WebcamStream().start()
-        template_video_stream = cv.VideoCapture(self.template_video)
+        template_video_stream = VideoStream(self.template_video)
 
         video_codex = cv.VideoWriter_fourcc(*'XVID')
         writer = cv.VideoWriter('./output.avi', video_codex, 30.0, (640, 480))
@@ -132,23 +133,30 @@ class Compare:
 
             if cv.waitKey(1) == ord('q') or webcam_stream.stopped:
                 webcam_stream.stop()
+                template_video_stream.stop()
                 break
 
             if self.user_in_position:
                 skeleton, output_image = self.passthrough_openpose(image)
                 if output_image is None:
                     webcam_stream.stop()
+                    template_video_stream.stop()
                     break
 
                 # Display Image
-                has_frame, template_image = template_video_stream.read()
-                if not has_frame:
+                if not template_video_stream.started:
+                    template_video_stream.start()
+                template_image = template_video_stream.frame
+
+                if template_video_stream.stopped:
                     webcam_stream.stop()
+                    template_video_stream.stop()
                     break
 
                 writer.write(image)
 
                 if template_frame_index < total_template_frames:
+                    start_time = datetime.now()
                     keypoints = skeleton.keypoints
                     # draw skeleton
                     for pair in self.pose_pairs:
@@ -179,6 +187,7 @@ class Compare:
 
                     template_frame_index+=1
 
+                # print('time taken for openpose processing : ', (datetime.now() - start_time))
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)
                 horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
@@ -192,7 +201,6 @@ class Compare:
             print('FPS of video: %d' % fps.counts_per_sec(), end="\r", flush=True)
             fps.increment()
 
-        template_video_stream.release()
         writer.release()
         cv.destroyAllWindows()
         print('FPS of video: %d' % fps.counts_per_sec())
