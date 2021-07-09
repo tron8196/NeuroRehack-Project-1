@@ -5,6 +5,7 @@ import sys
 import argparse
 import threading
 import pyttsx3
+import time
 
 from skeleton_sequence import SkeletonSequence
 from skeleton import Skeleton
@@ -118,7 +119,8 @@ class Compare:
     def webcam_loop(self):
         fps = FPS().start()
         webcam_stream = WebcamStream().start()
-        template_video_stream = VideoStream(self.template_video)
+        # TODO: do not read all frames at once 
+        template_video_stream = VideoStream(self.template_video).start()
 
         video_codex = cv.VideoWriter_fourcc(*'XVID')
         writer = cv.VideoWriter('./output.avi', video_codex, 30.0, (640, 480))
@@ -127,8 +129,9 @@ class Compare:
 
         total_template_frames = len(self.skeleton_seq_comp.sequence_data['normalized_keypoints'])
         template_frame_index = 0
+        ms_per_frame = 1000 / json_config['template_vid_fps']
 
-        while True:
+        while template_frame_index < total_template_frames:
             image = webcam_stream.frame
 
             if cv.waitKey(1) == ord('q') or webcam_stream.stopped:
@@ -137,6 +140,8 @@ class Compare:
                 break
 
             if self.user_in_position:
+                start_time = datetime.now()
+
                 skeleton, output_image = self.passthrough_openpose(image)
                 if output_image is None:
                     webcam_stream.stop()
@@ -144,50 +149,41 @@ class Compare:
                     break
 
                 # Display Image
-                if not template_video_stream.started:
-                    template_video_stream.start()
-                template_image = template_video_stream.frame
-
-                if template_video_stream.stopped:
-                    webcam_stream.stop()
-                    template_video_stream.stop()
-                    break
+                template_image = template_video_stream.read_queue[template_frame_index]
 
                 writer.write(image)
 
-                if template_frame_index < total_template_frames:
-                    start_time = datetime.now()
-                    keypoints = skeleton.keypoints
-                    # draw skeleton
-                    for pair in self.pose_pairs:
-                        point1_idx = pair[0]
-                        point2_idx = pair[1]
+                keypoints = skeleton.keypoints
+                # draw skeleton
+                for pair in self.pose_pairs:
+                    point1_idx = pair[0]
+                    point2_idx = pair[1]
 
-                        point1_2D = (int(keypoints[point1_idx][0]), int(keypoints[point1_idx][1]))
-                        point2_2D = (int(keypoints[point2_idx][0]), int(keypoints[point2_idx][1]))
+                    point1_2D = (int(keypoints[point1_idx][0]), int(keypoints[point1_idx][1]))
+                    point2_2D = (int(keypoints[point2_idx][0]), int(keypoints[point2_idx][1]))
 
-                        if point1_2D[0] and point2_2D[0] and point1_2D[1] and point2_2D[1]:
-                            # distance score
-                            point1_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point1_idx])
-                            point1 = np.array(skeleton.normalized_keypoints[point1_idx])
-                            point1_dist = np.linalg.norm(point1 - point1_compare)
+                    if point1_2D[0] and point2_2D[0] and point1_2D[1] and point2_2D[1]:
+                        # distance score
+                        point1_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point1_idx])
+                        point1 = np.array(skeleton.normalized_keypoints[point1_idx])
+                        point1_dist = np.linalg.norm(point1 - point1_compare)
 
-                            point2_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point2_idx])
-                            point2 = np.array(skeleton.normalized_keypoints[point2_idx])
-                            point2_dist = np.linalg.norm(point2 - point2_compare)
+                        point2_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point2_idx])
+                        point2 = np.array(skeleton.normalized_keypoints[point2_idx])
+                        point2_dist = np.linalg.norm(point2 - point2_compare)
 
-                            dist_score = (point1_dist + point2_dist) / 2
-                            dist_score = int(dist_score*10)
-                            if dist_score > 8:
-                                dist_score = 8
+                        dist_score = (point1_dist + point2_dist) / 2
+                        dist_score = int(dist_score*10)
+                        if dist_score > 8:
+                            dist_score = 8
 
-                            print('DIST SCORE :: ', dist_score)
+                        cv.line(image, point1_2D, point2_2D, tuple(255*t for t in colors[dist_score].rgb[::-1]), 5)
 
-                            cv.line(image, point1_2D, point2_2D, tuple(255*t for t in colors[dist_score].rgb[::-1]), 5)
-
-                    template_frame_index+=1
 
                 # print('time taken for openpose processing : ', (datetime.now() - start_time))
+                processing_time = ((datetime.now()-start_time).microseconds)/1000
+                no_of_frames_to_skip = math.ceil(processing_time / ms_per_frame)
+                template_frame_index += no_of_frames_to_skip
                 cv.namedWindow('Openpose result', cv.WINDOW_NORMAL)
                 cv.resizeWindow('image', 1280, 720)
                 horizontal = np.concatenate((cv.resize(cv.flip(template_image, 1), (300, 300)),
@@ -198,12 +194,14 @@ class Compare:
                 cv.resizeWindow('image', 1280, 720)
                 cv.imshow('Openpose result', cv.flip(image, 1))
 
-            print('FPS of video: %d' % fps.counts_per_sec(), end="\r", flush=True)
+            # print('FPS of video: %d' % fps.counts_per_sec(), end="\r", flush=True)
             fps.increment()
 
+        webcam_stream.stop()
+        template_video_stream.stop()
         writer.release()
         cv.destroyAllWindows()
-        print('FPS of video: %d' % fps.counts_per_sec())
+        # print('FPS of video: %d' % fps.counts_per_sec())
 
 
     def process_output_video(self):

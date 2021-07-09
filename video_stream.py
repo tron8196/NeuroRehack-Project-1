@@ -12,11 +12,10 @@ class VideoStream:
         self.stream = cv.VideoCapture(src)
         (self.grabbed, self.frame) = self.stream.read()
         self.stopped = False
-        self.started = False
+        self.read_queue = []
 
     def start(self):
         Thread(target=self.get, args=()).start()
-        self.started = True
         return self
 
     def get(self):
@@ -25,6 +24,8 @@ class VideoStream:
                 self.stop()
             else:
                 (self.grabbed, self.frame) = self.stream.read()
+                if self.grabbed:
+                    self.read_queue.append(self.frame)
 
     def stop(self):
         self.stopped = True
