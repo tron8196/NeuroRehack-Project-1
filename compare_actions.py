@@ -119,7 +119,7 @@ class Compare:
     def webcam_loop(self):
         fps = FPS().start()
         webcam_stream = WebcamStream().start()
-        # TODO: do not read all frames at once 
+        # TODO: do not read all frames at once
         template_video_stream = VideoStream(self.template_video).start()
 
         video_codex = cv.VideoWriter_fourcc(*'XVID')
@@ -130,10 +130,8 @@ class Compare:
         total_template_frames = len(self.skeleton_seq_comp.sequence_data['normalized_keypoints'])
         template_frame_index = 0
         ms_per_frame = 1000 / json_config['template_vid_fps']
-
-        while template_frame_index < total_template_frames:
+        while template_frame_index < total_template_frames-1:
             image = webcam_stream.frame
-
             if cv.waitKey(1) == ord('q') or webcam_stream.stopped:
                 webcam_stream.stop()
                 template_video_stream.stop()
@@ -177,9 +175,14 @@ class Compare:
                         if dist_score > 8:
                             dist_score = 8
 
-                        cv.line(image, point1_2D, point2_2D, tuple(255*t for t in colors[dist_score].rgb[::-1]), 5)
+                        color_tuple = tuple(255*t for t in colors[dist_score].rgb[::-1])
+                        cv.line(image, point1_2D, point2_2D, color_tuple, 5)
+                        cv.circle(image, point1_2D, 6, color_tuple, thickness=2, lineType=cv.FILLED)
+                        cv.circle(image, point2_2D, 6, color_tuple, thickness=2, lineType=cv.FILLED)
 
 
+                # print(template_frame_index)
+                # print('no of frames in queue: ', len(template_video_stream.read_queue))
                 # print('time taken for openpose processing : ', (datetime.now() - start_time))
                 processing_time = ((datetime.now()-start_time).microseconds)/1000
                 no_of_frames_to_skip = math.ceil(processing_time / ms_per_frame)
@@ -237,28 +240,41 @@ class Compare:
 
         agg_score = 0
         no_of_joints = len(upper_joint_angles)
+        no_of_joints_selected = 0
         for key in upper_joint_angles:
-            distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles'][key],
-                            self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
+            variance = np.var(self.skeleton_seq_comp.sequence_data['joint_angles'][key])
+            variance = round(variance, 2)
 
-            agg_score += distance
-            print('DTW score for ' + key + ': ', distance)
+            if variance > 0.01:
+                no_of_joints_selected+=1
+                distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles'][key],
+                                self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
 
-        print('Upper body avg DTW distance score: ', (agg_score/no_of_joints))
+                agg_score += distance
+                print('DTW score for ' + key + ': ', distance)
 
+        print('Upper body avg DTW distance score: ', (agg_score/no_of_joints_selected))
 
-        lower_joint_angles = ['LThighJoint', 'RThighJoint', 'LKneeJoint', 'RKneeJoint']
+        if agg_score:
+            lower_joint_angles = ['LThighJoint', 'RThighJoint', 'LKneeJoint', 'RKneeJoint']
 
         agg_score = 0
         no_of_joints = len(lower_joint_angles)
+        no_of_joints_selected = 0
         for key in lower_joint_angles:
-            distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles'][key],
-                            self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
+            variance = np.var(self.skeleton_seq_comp.sequence_data['joint_angles'][key])
+            variance = round(variance, 2)
 
-            agg_score += distance
-            print('DTW score for ' + key + ': ', distance)
+            if variance > 0.01:
+                no_of_joints_selected+=1
+                distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles'][key],
+                                self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
 
-        print('Lower body avg DTW distance score: ', (agg_score/no_of_joints))
+                agg_score += distance
+                print('DTW score for ' + key + ': ', distance)
+
+        if agg_score:
+            print('Lower body avg DTW distance score: ', (agg_score/no_of_joints_selected))
 
 
 if __name__ == '__main__':

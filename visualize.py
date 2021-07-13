@@ -57,10 +57,23 @@ for key, values in skeleton_seq.sequence_data['joint_angles'].items():
     plt.plot(range(len(values)), values)
 
 
-distance, _ = fastdtw(skeleton_seq.sequence_data['joint_angles']['LKneeJoint'],
-                        skeleton_seq.sequence_data['joint_angles']['RKneeJoint'], dist=euclidean)
+upper_joint_angles = ['LNeckJoint', 'RNeckJoint', 'LArmpitJoint', 'RArmpitJoint',
+'LElbowJoint', 'RElbowJoint','LHipJoint','RHipJoint']
+no_of_joints = len(upper_joint_angles)
+for key in upper_joint_angles:
+    print(key + '::')
+    print('Mean: ', np.average(skeleton_seq.sequence_data['joint_angles'][key]))
+    print('Variance: ', round(np.var(skeleton_seq.sequence_data['joint_angles'][key]), 2))
+    print("=====================================")
 
-print('DTW distance : ', distance)
+
+lower_joint_angles = ['LThighJoint', 'RThighJoint', 'LKneeJoint', 'RKneeJoint']
+no_of_joints = len(lower_joint_angles)
+for key in lower_joint_angles:
+    print(key + '::')
+    print('Mean: ', np.average(skeleton_seq.sequence_data['joint_angles'][key]))
+    print('Variance: ', round(np.var(skeleton_seq.sequence_data['joint_angles'][key]), 2))
+    print("=====================================")
 
 plt.legend(skeleton_seq.sequence_data['joint_angles'].keys(), ncol=2, loc='upper right');
 plt.show()
