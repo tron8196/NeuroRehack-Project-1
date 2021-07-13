@@ -3,10 +3,10 @@
     "shoulder_left_index":  2,
     "shoulder_right_index": 5,
 
-    "countdown_duration": 3,
+    "countdown_duration": 5,
     "model_pose": "BODY_25",
     "model_folder": "../openpose/models/",
     "net_resolution": "-656x368",
 
-    "template_vid_fps": 25
+    "template_vid_fps": 20
 }

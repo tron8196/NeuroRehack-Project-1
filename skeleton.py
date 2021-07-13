@@ -52,8 +52,11 @@ class Skeleton:
         self.normalized_keypoints = []
 
         for point in self.keypoints:
-            normalized_point = np.divide(np.subtract(point, self.keypoints[NECK_INDEX]), self.shoulder_dist)
-            self.normalized_keypoints.append(list(np.float64(normalized_point)))
+            if point[0] or point[1] or point[2]:
+                normalized_point = np.divide(np.subtract(point, self.keypoints[NECK_INDEX]), self.shoulder_dist)
+                self.normalized_keypoints.append(list(np.float64(normalized_point)))
+            else:
+                self.normalized_keypoints.append([-1, -1, -1])
 
 
     def calc_joint_angle(self, a, b, c):

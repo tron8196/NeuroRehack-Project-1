@@ -163,22 +163,25 @@ class Compare:
                     if point1_2D[0] and point2_2D[0] and point1_2D[1] and point2_2D[1]:
                         # distance score
                         point1_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point1_idx])
-                        point1 = np.array(skeleton.normalized_keypoints[point1_idx])
-                        point1_dist = np.linalg.norm(point1 - point1_compare)
-
                         point2_compare = np.array(self.skeleton_seq_comp.sequence_data['normalized_keypoints'][template_frame_index][point2_idx])
-                        point2 = np.array(skeleton.normalized_keypoints[point2_idx])
-                        point2_dist = np.linalg.norm(point2 - point2_compare)
 
-                        dist_score = (point1_dist + point2_dist) / 2
-                        dist_score = int(dist_score*10)
-                        if dist_score > 8:
-                            dist_score = 8
+                        if not(point1_compare[0] == -1 and point1_compare[1] == -1 and point1_compare[2] == -1) and not(point2_compare[0] == -1 and point2_compare[1] == -1 and point2_compare[2] == -1):
+                            point1 = np.array(skeleton.normalized_keypoints[point1_idx])
+                            point1_dist = np.linalg.norm(point1 - point1_compare)
 
-                        color_tuple = tuple(255*t for t in colors[dist_score].rgb[::-1])
-                        cv.line(image, point1_2D, point2_2D, color_tuple, 5)
-                        cv.circle(image, point1_2D, 6, color_tuple, thickness=2, lineType=cv.FILLED)
-                        cv.circle(image, point2_2D, 6, color_tuple, thickness=2, lineType=cv.FILLED)
+                            point2 = np.array(skeleton.normalized_keypoints[point2_idx])
+                            point2_dist = np.linalg.norm(point2 - point2_compare)
+
+                            dist_score = (point1_dist + point2_dist) / 2
+                            dist_score = int(dist_score*10)
+                            if dist_score > 8:
+                                dist_score = 8
+
+
+                            color_tuple = tuple(255*t for t in colors[dist_score].rgb[::-1])
+                            cv.line(image, point1_2D, point2_2D, color_tuple, 5)
+                            cv.circle(image, point1_2D, 6, color_tuple, thickness=2, lineType=cv.FILLED)
+                            cv.circle(image, point2_2D, 6, color_tuple, thickness=2, lineType=cv.FILLED)
 
 
                 # print(template_frame_index)
