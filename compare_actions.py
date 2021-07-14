@@ -238,6 +238,38 @@ class Compare:
 
 
     def calc_dtw_score(self, skeleton_seq):
+        seq_comp_keypoints = {}
+        for keypoints in self.skeleton_seq_comp.sequence_data['normalized_keypoints']:
+            for index, point in enumerate(keypoints):
+                kp_list = seq_comp_keypoints.get(index, [])
+                point = [point[0], point[1]]
+                kp_list.append(point)
+                seq_comp_keypoints[index] = kp_list
+
+        seq_keypoints = {}
+        for keypoints in skeleton_seq.sequence_data['normalized_keypoints']:
+            for index, point in enumerate(keypoints):
+                kp_list = seq_keypoints.get(index, [])
+                point = [point[0], point[1]]
+                kp_list.append(point)
+                seq_keypoints[index] = kp_list
+
+        agg_score = 0
+        no_of_kp_selected = 0
+        relevant_key_points = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]
+        for key in relevant_key_points:
+            if not(seq_comp_keypoints[key][0][0] == -1) and not(seq_comp_keypoints[key][0][1] == -1):
+                distance, _ = fastdtw(np.array(seq_keypoints[key]),
+                                     np.array(seq_comp_keypoints[key]), dist=euclidean)
+
+                print('DTW score for keypoint number ' + str(key) + ' is: ', distance)
+                no_of_kp_selected+=1
+                agg_score += distance
+
+        print('No of relevant points : ', no_of_kp_selected)
+        print('Avg DTW score for normalized skeletons : ', (agg_score/no_of_kp_selected))
+        print("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
+
         upper_joint_angles = ['LNeckJoint', 'RNeckJoint', 'LArmpitJoint', 'RArmpitJoint',
         'LElbowJoint', 'RElbowJoint','LHipJoint','RHipJoint']
 
