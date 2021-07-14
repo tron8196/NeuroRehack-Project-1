@@ -40,6 +40,24 @@ SHOULDER_RIGHT_INDEX = json_config['shoulder_right_index']
 green = Color("green")
 colors = list(green.range_to(Color("red"), 9))
 
+body_keypoint_dict = {
+    0: 'Nose',
+    1: 'Neck',
+    2: 'RShoulder',
+    3: 'RElbow',
+    4: 'RWrist',
+    5: 'LShoulder',
+    6: 'LElbow',
+    7: 'LWrist',
+    8: 'Midhip',
+    9: 'RHip',
+    10: 'RKnee',
+    11: 'RAnkle',
+    12: 'LHip',
+    13: 'LKnee',
+    14: 'LAnkle'
+}
+
 class Compare:
     def __init__(self, args):
         self.engine = pyttsx3.init()
@@ -262,7 +280,7 @@ class Compare:
                 distance, _ = fastdtw(np.array(seq_keypoints[key]),
                                      np.array(seq_comp_keypoints[key]), dist=euclidean)
 
-                print('DTW score for keypoint number ' + str(key) + ' is: ', distance)
+                print('DTW score for body point ' + body_keypoint_dict[key] + ' is: ', distance)
                 no_of_kp_selected+=1
                 agg_score += distance
 
@@ -286,13 +304,14 @@ class Compare:
                                 self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
 
                 agg_score += distance
-                print('DTW score for ' + key + ': ', distance)
-
-        print('Upper body avg DTW distance score: ', (agg_score/no_of_joints_selected))
+                print('DTW score for ' + key + ' angle: ', distance)
 
         if agg_score:
-            lower_joint_angles = ['LThighJoint', 'RThighJoint', 'LKneeJoint', 'RKneeJoint']
+            print('Upper body avg DTW distance score: ', (agg_score/no_of_joints_selected))
+            print("::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
 
+
+        lower_joint_angles = ['LThighJoint', 'RThighJoint', 'LKneeJoint', 'RKneeJoint']
         agg_score = 0
         no_of_joints = len(lower_joint_angles)
         no_of_joints_selected = 0
@@ -306,7 +325,7 @@ class Compare:
                                 self.skeleton_seq_comp.sequence_data['joint_angles'][key], dist=euclidean)
 
                 agg_score += distance
-                print('DTW score for ' + key + ': ', distance)
+                print('DTW score for ' + key + ' angle: ', distance)
 
         if agg_score:
             print('Lower body avg DTW distance score: ', (agg_score/no_of_joints_selected))
