@@ -28,12 +28,12 @@ skeleton_seq.load_from_json(args.data)
 
 
 if args.filt_size is None:
-    filt_size = 23
+    filt_size = 13
 else:
     filt_size = int(args.filt_size)
 
 if args.sigma is None:
-    sigma = 5
+    sigma = 0.1
 else:
     sigma = float(args.sigma)
 
@@ -49,11 +49,11 @@ sns.set()
 
 for key, values in skeleton_seq.sequence_data['joint_angles'].items():
 
-    # values = smoothing(values)
+    values = smoothing(values)
     # skeleton_seq.sequence_data['joint_angles'][key] = list(values)
 
-    plt.plot(range(len(skeleton_seq.sequence_data['joint_angles'][key])),
-                        skeleton_seq.sequence_data['joint_angles'][key])
+    plt.plot(range(len(values)),
+                        values)
 
 
 upper_joint_angles = ['LNeckJoint', 'RNeckJoint', 'LArmpitJoint', 'RArmpitJoint',

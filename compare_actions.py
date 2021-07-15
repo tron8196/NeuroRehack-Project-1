@@ -256,7 +256,7 @@ class Compare:
                 print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
 
             print('Total no of frames processed: %d' % no_of_frames)
-            skeleton_seq.smoothen()
+            skeleton_seq.create_sequence_data()
             skeleton_seq.save_as_json(self.folder_name, webcam=True)
 
         output_vid_stream.release()
@@ -264,6 +264,9 @@ class Compare:
 
 
     def calc_dtw_score(self, skeleton_seq):
+        skeleton_seq.smoothen()            # webcam vid 
+        self.skeleton_seq_comp.smoothen() # template vid
+
         seq_comp_keypoints = {}
         for keypoints in self.skeleton_seq_comp.sequence_data['normalized_keypoints']:
             for index, point in enumerate(keypoints):

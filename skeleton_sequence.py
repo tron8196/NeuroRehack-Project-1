@@ -10,6 +10,10 @@ ROOT_PATH = './'
 json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings')
 webcam_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings_webcam')
 
+import json
+cf = open('./config.json')
+json_config = json.load(cf)
+
 class SkeletonSequence():
     def __init__(self):
         # patient data, including joint angle sequence
@@ -43,8 +47,7 @@ class SkeletonSequence():
         self.sequence_data = json.load(sf)
 
 
-    def smoothen(self, kernel_size=23, sigma=5):
-
+    def create_sequence_data(self):
         for skeleton in self.skeletons:
             for key, values in skeleton.joint_angles.items():
                 self.sequence_data['joint_angles'][key].append(values)
@@ -52,10 +55,12 @@ class SkeletonSequence():
             self.sequence_data['normalized_keypoints'].append(skeleton.normalized_keypoints)
 
 
+    def smoothen(self):
+
         for key, values in self.sequence_data['joint_angles'].items():
 
-            values = medfilt(volume=values, kernel_size=kernel_size)
-            values = gaussian_filter(input=values, sigma=sigma)
+            values = medfilt(volume=values, kernel_size=json_config['kernel_size'])
+            values = gaussian_filter(input=values, sigma=json_config['sigma'])
 
             self.sequence_data['joint_angles'][key] = list(values)
 

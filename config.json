@@ -8,5 +8,8 @@
     "model_folder": "../openpose/models/",
     "net_resolution": "-656x368",
 
-    "template_vid_fps": 20
+    "template_vid_fps": 20,
+
+    "kernel_size": 23,
+    "sigma": 0.1
 }

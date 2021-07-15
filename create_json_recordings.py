@@ -13,6 +13,7 @@ except ImportError as e:
 
 ROOT_PATH = './'
 video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings')
+video_recordings_webcam_dir = os.path.join(ROOT_PATH, 'video_recordings_webcam')
 
 def set_params():
     params = dict()
@@ -28,6 +29,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Record an action or compare with an existing one')
     parser.add_argument('--folder', help='Name of an action folder inside of recordings directory.')
+    parser.add_argument('--webcam', action='store_true')
     args = parser.parse_args()
 
     assert args.folder, "Argument --folder is required to save this recording as a json file."
@@ -38,7 +40,11 @@ if __name__ == '__main__':
         opWrapper.configure(params)
         opWrapper.start()
 
-        exercise_dir = os.path.join(video_recordings_dir, args.folder)
+        if args.webcam:
+            exercise_dir = os.path.join(video_recordings_webcam_dir, args.folder)
+        else:
+            exercise_dir = os.path.join(video_recordings_dir, args.folder)
+
         file_names = next(os.walk(exercise_dir))[2]
         for file_name in file_names:
             stream = cv.VideoCapture(os.path.join(exercise_dir, file_name))
@@ -66,8 +72,8 @@ if __name__ == '__main__':
                 print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
 
             print('Total no of frames processed: %d' % no_of_frames)
-            skeleton_seq.smoothen()
-            skeleton_seq.save_as_json(args.folder)
+            skeleton_seq.create_sequence_data()
+            skeleton_seq.save_as_json(args.folder, webcam=args.webcam)
 
     except Exception as e:
         print(e)
