@@ -28,20 +28,17 @@ skeleton_seq.load_from_json(args.data)
 
 
 if args.filt_size is None:
-    filt_size = 3
+    filt_size = 23
 else:
     filt_size = int(args.filt_size)
 
 if args.sigma is None:
-    sigma = 1
+    sigma = 5
 else:
     sigma = float(args.sigma)
 
 
 def smoothing(values):
-    # removing NaNs
-    values = [v for v in values if v==v]
-
     values = medfilt(volume=values, kernel_size=filt_size)
     values = gaussian_filter(input=values, sigma=sigma)
 
@@ -52,9 +49,11 @@ sns.set()
 
 for key, values in skeleton_seq.sequence_data['joint_angles'].items():
 
-    # skeleton_seq.sequence_data['joint_angles'][key] = smoothing(values)
+    # values = smoothing(values)
+    # skeleton_seq.sequence_data['joint_angles'][key] = list(values)
 
-    plt.plot(range(len(values)), values)
+    plt.plot(range(len(skeleton_seq.sequence_data['joint_angles'][key])),
+                        skeleton_seq.sequence_data['joint_angles'][key])
 
 
 upper_joint_angles = ['LNeckJoint', 'RNeckJoint', 'LArmpitJoint', 'RArmpitJoint',

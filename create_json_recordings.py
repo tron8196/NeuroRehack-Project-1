@@ -39,11 +39,8 @@ if __name__ == '__main__':
         opWrapper.start()
 
         exercise_dir = os.path.join(video_recordings_dir, args.folder)
-        print(exercise_dir)
         file_names = next(os.walk(exercise_dir))[2]
-        print(file_names)
         for file_name in file_names:
-            print(os.path.join(exercise_dir, file_name))
             stream = cv.VideoCapture(os.path.join(exercise_dir, file_name))
             skeleton_seq = SkeletonSequence()
 

@@ -8,6 +8,7 @@ from scipy.ndimage.filters import gaussian_filter
 
 ROOT_PATH = './'
 json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings')
+webcam_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings_webcam')
 
 class SkeletonSequence():
     def __init__(self):
@@ -42,7 +43,14 @@ class SkeletonSequence():
         self.sequence_data = json.load(sf)
 
 
-    def smoothen(self, kernel_size=3, sigma=1):
+    def smoothen(self, kernel_size=23, sigma=5):
+
+        for skeleton in self.skeletons:
+            for key, values in skeleton.joint_angles.items():
+                self.sequence_data['joint_angles'][key].append(values)
+
+            self.sequence_data['normalized_keypoints'].append(skeleton.normalized_keypoints)
+
 
         for key, values in self.sequence_data['joint_angles'].items():
 
@@ -52,20 +60,13 @@ class SkeletonSequence():
             self.sequence_data['joint_angles'][key] = list(values)
 
 
-    def save_as_json(self, folder_name='no_action', sigma=1, filt_size=3, output=False):
-        action_dir = os.path.join(json_recordings_dir, folder_name)
-        file_name = "recording_"+ folder_name +"_{:%Y%m%dT%H%M%S}.json".format(datetime.now())
+    def save_as_json(self, folder_name='no_action', webcam=False):
+        if not webcam:
+            action_dir = os.path.join(json_recordings_dir, folder_name)
+        else:
+            action_dir = os.path.join(webcam_recordings_dir, folder_name)
 
-        if output:
-            action_dir=ROOT_PATH
-            file_name = 'output.json'
-
-        for skeleton in self.skeletons:
-            for key, values in skeleton.joint_angles.items():
-                self.sequence_data['joint_angles'][key].append(values)
-
-            self.sequence_data['normalized_keypoints'].append(skeleton.normalized_keypoints)
-
+        file_name = folder_name +".json"
 
         with open(os.path.join(action_dir, file_name), 'w', encoding='utf-8') as write_file:
             json.dump(self.sequence_data, write_file, ensure_ascii=False, indent=4)

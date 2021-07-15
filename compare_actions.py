@@ -28,6 +28,8 @@ except ImportError as e:
 ROOT_PATH = './'
 json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings')
 video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings')
+webcam_json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings_webcam')
+webcam_video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings_webcam')
 
 import json
 cf = open('./config.json')
@@ -140,8 +142,10 @@ class Compare:
         # TODO: do not read all frames at once
         template_video_stream = VideoStream(self.template_video).start()
 
+        webcam_dir = os.path.join(webcam_video_recordings_dir, self.folder_name)
+        webcam_file = self.folder_name + ".avi"
         video_codex = cv.VideoWriter_fourcc(*'XVID')
-        writer = cv.VideoWriter('./output.avi', video_codex, 30.0, (640, 480))
+        writer = cv.VideoWriter(os.path.join(webcam_dir, webcam_file), video_codex, 30.0, (640, 480))
 
         font = cv.FONT_HERSHEY_SIMPLEX
 
@@ -229,29 +233,33 @@ class Compare:
 
 
     def process_output_video(self):
-        output_vid_stream = cv.VideoCapture('./output.avi')
-        skeleton_seq = SkeletonSequence()
+        webcam_dir = os.path.join(webcam_video_recordings_dir, self.folder_name)
+        file_names = next(os.walk(webcam_dir))[2]
 
-        no_of_frames = 0
-        while True:
-            has_frame, image = output_vid_stream.read()
-            if not has_frame:
-                break
+        for file_name in file_names:
+            output_vid_stream = cv.VideoCapture(os.path.join(webcam_dir, file_name))
+            skeleton_seq = SkeletonSequence()
 
-            skeleton, _ = self.passthrough_openpose(image)
+            no_of_frames = 0
+            while True:
+                has_frame, image = output_vid_stream.read()
+                if not has_frame:
+                    break
 
-            if skeleton is None:
-                break
+                skeleton, _ = self.passthrough_openpose(image)
 
-            skeleton_seq.add_keypoints(skeleton.keypoints)
-            no_of_frames += 1
-            print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
+                if skeleton is None:
+                    break
 
-        print('Total no of frames processed: %d' % no_of_frames)
-        skeleton_seq.smoothen()
-        skeleton_seq.save_as_json(output=True)
+                skeleton_seq.add_keypoints(skeleton.keypoints)
+                no_of_frames += 1
+                print('No of frames processed: %d' % no_of_frames, end="\r", flush=True)
+
+            print('Total no of frames processed: %d' % no_of_frames)
+            skeleton_seq.smoothen()
+            skeleton_seq.save_as_json(self.folder_name, webcam=True)
+
         output_vid_stream.release()
-
         return skeleton_seq
 
 
@@ -355,5 +363,13 @@ if __name__ == '__main__':
         countdown_p.join()
         webcam_p.join()
 
-    skeleton_seq = comp.process_output_video()
-    comp.calc_dtw_score(skeleton_seq)
+        skeleton_seq = comp.process_output_video()
+        comp.calc_dtw_score(skeleton_seq)
+
+    else:
+        # process from already available json
+        webcam_json_dir = os.path.join(webcam_json_recordings_dir, args.folder)
+        file_name = next(os.walk(webcam_json_dir))[2][0]
+        skeleton_seq = SkeletonSequence()
+        skeleton_seq.load_from_json(os.path.join(webcam_json_dir, file_name))
+        comp.calc_dtw_score(skeleton_seq)
