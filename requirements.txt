@@ -1,0 +1,37 @@
+# packages in environment at /home/praveens/miniconda3/envs/vines:
+#
+# Name                    Version                   Build  Channel
+_libgcc_mutex             0.1                        main  
+ca-certificates           2021.4.13            h06a4308_1  
+certifi                   2020.12.5        py38h06a4308_0  
+colour                    0.1.5                    pypi_0    pypi
+cycler                    0.10.0                   pypi_0    pypi
+fastdtw                   0.3.4                    pypi_0    pypi
+kiwisolver                1.3.1                    pypi_0    pypi
+ld_impl_linux-64          2.33.1               h53a641e_7  
+libffi                    3.3                  he6710b0_2  
+libgcc-ng                 9.1.0                hdf63c60_0  
+libstdcxx-ng              9.1.0                hdf63c60_0  
+matplotlib                3.4.2                    pypi_0    pypi
+ncurses                   6.2                  he6710b0_1  
+numpy                     1.20.3                   pypi_0    pypi
+opencv-python             4.5.2.52                 pypi_0    pypi
+openssl                   1.1.1k               h27cfd23_0  
+pandas                    1.2.4                    pypi_0    pypi
+pillow                    8.2.0                    pypi_0    pypi
+pip                       21.1.1           py38h06a4308_0  
+pyparsing                 2.4.7                    pypi_0    pypi
+python                    3.8.5                h7579374_1  
+python-dateutil           2.8.1                    pypi_0    pypi
+pyttsx3                   2.90                     pypi_0    pypi
+pytz                      2021.1                   pypi_0    pypi
+readline                  8.1                  h27cfd23_0  
+scipy                     1.6.3                    pypi_0    pypi
+seaborn                   0.11.1                   pypi_0    pypi
+setuptools                52.0.0           py38h06a4308_0  
+six                       1.16.0                   pypi_0    pypi
+sqlite                    3.35.4               hdfb4753_0  
+tk                        8.6.10               hbc83047_0  
+wheel                     0.36.2             pyhd3eb1b0_0  
+xz                        5.2.5                h7b6447c_0  
+zlib                      1.2.11               h7b6447c_3  
