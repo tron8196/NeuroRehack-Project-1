@@ -18,6 +18,17 @@ from colour import Color
 import numpy as np
 from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
+import os
+# Change these variables to point to the correct folder (Release/x64 etc.)
+
+
+if os.name == 'nt':
+    dir_path = r'C:/Users/hp/openpose'
+    sys.path.append(dir_path + '/build/python/openpose/Release');
+    print(dir_path + '/build/python/openpose/Release')
+    os.environ['PATH']  = os.environ['PATH'] + ';' + dir_path + '/build/x64/Release;' +  dir_path + '/build/bin;'
+    print(os.environ['PATH'] + ';' + dir_path + '/build/x64/Release;' +  dir_path + '/build/bin;')
+#import pyopenpose as op
 
 try:
     import pyopenpose as op
