@@ -6,6 +6,7 @@
     "countdown_duration": 5,
     "model_pose": "BODY_25",
     "model_folder": "../openpose/models/",
+    "model_folder": "C:\\Users\\hp\\openpose\\models",
     "net_resolution": "-656x368",
 
     "template_vid_fps": 20,
