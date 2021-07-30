@@ -23,6 +23,7 @@ To compare a user's current action (from webcam) to that of a recorded one, you'
 
 ```
 python compare.py --folder=left_hand_raise
+python compare_actions.py --folder=left_hand_raise
 ```
 
 The expected folder structure is:
@@ -36,7 +37,14 @@ If you've already generated an output video by recording your action using the c
 
 ```
 python compare.py --folder=left_hand_raise --no_webcam
+python compare_actions.py --folder=left_hand_raise --no_webcam
 ```
+
+For windows users:
+1. Update the model folder in config.json file to your openpose models folder:
+    eg. C:\\Users\\hp\\openpose\\models
+
+2. Update the path to your openpose installation in the compare_actions.py file at dir_path line 23
 
 ## Relevant Links
 ### Recommended tool for recording and editing action videos:-
