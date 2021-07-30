@@ -19,16 +19,15 @@ import numpy as np
 from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
 import os
+
 # Change these variables to point to the correct folder (Release/x64 etc.)
-
-
 if os.name == 'nt':
     dir_path = r'C:/Users/hp/openpose'
     sys.path.append(dir_path + '/build/python/openpose/Release');
     print(dir_path + '/build/python/openpose/Release')
     os.environ['PATH']  = os.environ['PATH'] + ';' + dir_path + '/build/x64/Release;' +  dir_path + '/build/bin;'
     print(os.environ['PATH'] + ';' + dir_path + '/build/x64/Release;' +  dir_path + '/build/bin;')
-#import pyopenpose as op
+
 
 try:
     import pyopenpose as op
@@ -36,15 +35,15 @@ except ImportError as e:
     print('Error: OpenPose library could not be found. Did you enable `BUILD_PYTHON` in CMake and have this Python script in the right folder?')
     raise e
 
-ROOT_PATH = './'
-json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings')
-video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings')
-webcam_json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings_webcam')
-webcam_video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings_webcam')
-
 import json
 cf = open('./config.json')
 json_config = json.load(cf)
+
+ROOT_PATH = './'
+json_recordings_dir = os.path.join(ROOT_PATH, json_config['template_vids_json'])
+video_recordings_dir = os.path.join(ROOT_PATH, json_config['template_vids'])
+webcam_json_recordings_dir = os.path.join(ROOT_PATH, json_config['webcam_vids_json'])
+webcam_video_recordings_dir = os.path.join(ROOT_PATH, json_config['webcam_vids'])
 
 NECK_INDEX = json_config['neck_index']
 SHOULDER_LEFT_INDEX = json_config['shoulder_left_index']
@@ -78,7 +77,7 @@ class Compare:
 
         self.params = dict()
         self.params['model_pose'] = json_config['model_pose']
-        self.params['model_folder'] = json_config['model_folder']
+        self.params['model_folder'] = json_config['model_folder_windows'] if os.name == 'nt' else json_config['model_folder']
         self.params['net_resolution'] = json_config['net_resolution']
 
         self.skeleton_seq_comp = SkeletonSequence()
@@ -275,7 +274,7 @@ class Compare:
 
 
     def calc_dtw_score(self, skeleton_seq):
-        skeleton_seq.smoothen()            # webcam vid 
+        skeleton_seq.smoothen()            # webcam vid
         self.skeleton_seq_comp.smoothen() # template vid
 
         seq_comp_keypoints = {}
