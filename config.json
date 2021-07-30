@@ -1,6 +1,7 @@
 {
     "neck_index": 1,
     "shoulder_left_index":  2,
+    "shoulder_left_index": 2,
     "shoulder_right_index": 5,
 
     "countdown_duration": 5,
