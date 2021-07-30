@@ -6,13 +6,13 @@ import json
 from scipy.signal import medfilt
 from scipy.ndimage.filters import gaussian_filter
 
-ROOT_PATH = './'
-json_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings')
-webcam_recordings_dir = os.path.join(ROOT_PATH, 'json_recordings_webcam')
-
 import json
 cf = open('./config.json')
 json_config = json.load(cf)
+
+ROOT_PATH = './'
+json_recordings_dir = os.path.join(ROOT_PATH, json_config['template_vids_json'])
+webcam_recordings_dir = os.path.join(ROOT_PATH, json_config['webcam_vids_json'])
 
 class SkeletonSequence():
     def __init__(self):

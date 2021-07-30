@@ -11,9 +11,13 @@ except ImportError as e:
     print('Error: OpenPose library could not be found. Did you enable `BUILD_PYTHON` in CMake and have this Python script in the right folder?')
     raise e
 
+import json
+cf = open('./config.json')
+json_config = json.load(cf)
+
 ROOT_PATH = './'
-video_recordings_dir = os.path.join(ROOT_PATH, 'video_recordings')
-video_recordings_webcam_dir = os.path.join(ROOT_PATH, 'video_recordings_webcam')
+video_recordings_dir = os.path.join(ROOT_PATH, json_config['template_vids'])
+video_recordings_webcam_dir = os.path.join(ROOT_PATH, json_config['webcam_vids'])
 
 def set_params():
     params = dict()

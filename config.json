@@ -6,10 +6,16 @@
     "countdown_duration": 5,
     "model_pose": "BODY_25",
     "model_folder": "../openpose/models/",
+    "model_folder_windows": "C:\\Users\\hp\\openpose\\models",
     "net_resolution": "-656x368",
 
     "template_vid_fps": 20,
 
     "kernel_size": 23,
-    "sigma": 0.1
+    "sigma": 0.1,
+
+    "template_vids_json": "json_recordings",
+    "webcam_vids_json": "json_recordings_webcam",
+    "template_vids": "video_recordings",
+    "webcam_vids": "video_recordings_webcam"
 }
